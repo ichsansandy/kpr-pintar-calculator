@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>KPR Pintar — Kalkulator Cicilan Bertingkat</title>
+  <meta name="description" content="Kalkulator KPR bertingkat: hitung cicilan fix & floating dengan multi pelunasan awal." />
+  <meta name="theme-color" content="#0B3D2E" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --green-deep: #0B3D2E;
+      --green-mid:  #1A6B4A;
+      --green-light:#2ECC8A;
+      --green-pale: #D4F5E5;
+      --gold:       #F5C842;
+      --gold-light: #FFF4C2;
+      --cream:      #FAF8F3;
+      --white:      #FFFFFF;
+      --ink:        #0D1B12;
+      --ink-60:     rgba(13,27,18,0.6);
+      --ink-20:     rgba(13,27,18,0.12);
+      --red-warn:   #E53935;
+      --red-pale:   #FDECEA;
+      --radius:     20px;
+      --radius-sm:  12px;
+      --shadow:     0 4px 24px rgba(11,61,46,0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; overflow-x: hidden; }
+
+    .topbar { background: var(--green-deep); padding: 18px 20px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .topbar-logo { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--white); }
+    .topbar-logo span { color: var(--green-light); }
+    .topbar-tag { font-size: 11px; color: var(--green-pale); background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 20px; font-weight: 600; letter-spacing: 0.5px; }
+
+    .hero { background: linear-gradient(160deg, var(--green-deep) 0%, var(--green-mid) 100%); padding: 28px 20px 36px; color: var(--white); position: relative; overflow: hidden; }
+    .hero::before { content:''; position:absolute; width:260px; height:260px; border-radius:50%; background:rgba(46,204,138,0.08); top:-80px; right:-60px; }
+    .hero-label { font-size:11px; font-weight:700; letter-spacing:2px; color:var(--green-light); text-transform:uppercase; margin-bottom:8px; }
+    .hero-title { font-family:'DM Serif Display',serif; font-size:28px; line-height:1.25; margin-bottom:10px; }
+    .hero-sub { font-size:13.5px; color:rgba(255,255,255,0.7); line-height:1.6; }
+
+    .main { padding: 24px 16px 100px; max-width: 520px; margin: 0 auto; }
+
+    .card { background: var(--white); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow); }
+    .card-title { font-size:12px; font-weight:700; color:var(--ink-60); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+    .card-title .dot { width:8px; height:8px; border-radius:50%; background:var(--green-light); display:inline-block; }
+
+    .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
+    .field label { display:block; font-size:12.5px; font-weight:600; color:var(--ink-60); margin-bottom:6px; }
+    .input-wrap { position:relative; display:flex; align-items:center; }
+    .input-prefix, .input-suffix { position:absolute; font-size:13px; font-weight:700; color:var(--ink-60); pointer-events:none; }
+    .input-prefix { left:14px; }
+    .input-suffix { right:14px; }
+    .field input[type="number"], .field input[type="text"], .field select {
+      width:100%; padding:13px 14px; border:1.5px solid var(--ink-20); border-radius:var(--radius-sm);
+      font-size:15px; font-family:'Plus Jakarta Sans',sans-serif; font-weight:600;
+      color:var(--ink); background:var(--cream); outline:none; transition:border-color 0.2s; appearance:none;
+    }
+    .field input.has-prefix { padding-left:38px; }
+    .field input.has-suffix { padding-right:42px; }
+    .field input:focus, .field select:focus { border-color:var(--green-mid); background:var(--white); }
+
+    .slider-wrap { padding:4px 0; }
+    input[type="range"] { width:100%; height:6px; border-radius:3px; background:var(--ink-20); outline:none; -webkit-appearance:none; cursor:pointer; margin:8px 0 4px; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:var(--green-mid); border:3px solid var(--white); box-shadow:0 2px 8px rgba(11,61,46,0.3); }
+    .slider-labels { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-60); }
+
+    .step-table { width:100%; border-collapse:collapse; }
+    .step-table th { font-size:11px; font-weight:700; color:var(--ink-60); text-align:left; padding:6px 6px; border-bottom:1.5px solid var(--ink-20); }
+    .step-table td { padding:7px 5px; border-bottom:1px solid var(--ink-20); }
+    .step-table tr:last-child td { border-bottom:none; }
+    .step-table td input { width:100%; padding:7px 8px; border:1.5px solid var(--ink-20); border-radius:8px; font-size:13px; font-weight:600; font-family:'Plus Jakarta Sans',sans-serif; background:var(--cream); color:var(--ink); outline:none; }
+    .step-table td input:focus { border-color:var(--green-mid); }
+
+    .add-step-btn { display:flex; align-items:center; gap:6px; background:var(--green-pale); color:var(--green-deep); border:none; border-radius:var(--radius-sm); padding:10px 16px; font-size:13px; font-weight:700; cursor:pointer; margin-top:12px; width:100%; justify-content:center; font-family:'Plus Jakarta Sans',sans-serif; }
+    .remove-btn { background:var(--red-pale); color:var(--red-warn); border:none; border-radius:6px; padding:5px 9px; font-size:11px; cursor:pointer; font-weight:700; white-space:nowrap; }
+
+    /* PELUNASAN MULTI */
+    .pel-card { background:var(--white); border-radius:var(--radius); padding:20px; margin-bottom:16px; box-shadow:var(--shadow); }
+    .pel-card-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:0; }
+    .pel-card-title { font-size:12px; font-weight:700; color:var(--ink-60); text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; gap:8px; }
+
+    .toggle { width:48px; height:28px; border-radius:14px; background:var(--ink-20); border:none; cursor:pointer; position:relative; transition:background 0.2s; flex-shrink:0; }
+    .toggle.on { background:var(--green-mid); }
+    .toggle::after { content:''; position:absolute; width:22px; height:22px; border-radius:50%; background:var(--white); top:3px; left:3px; transition:transform 0.2s; box-shadow:0 1px 4px rgba(0,0,0,0.2); }
+    .toggle.on::after { transform:translateX(20px); }
+
+    .pel-section-body { margin-top:16px; }
+    .pel-hint { font-size:12px; color:var(--ink-60); margin-bottom:14px; line-height:1.6; }
+    .pel-list { display:flex; flex-direction:column; gap:12px; }
+
+    .pel-event { background:var(--cream); border-radius:var(--radius-sm); padding:14px; border:1.5px solid var(--ink-20); }
+    .pel-event-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .pel-event-label { font-size:12px; font-weight:800; color:var(--green-deep); display:flex; align-items:center; gap:7px; }
+    .pel-num { background:var(--green-deep); color:var(--white); border-radius:50%; width:20px; height:20px; font-size:11px; display:inline-flex; align-items:center; justify-content:center; font-weight:800; flex-shrink:0; }
+    .pel-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .pel-grid .field { margin-bottom:0; }
+    .pel-full { grid-column:1/-1; }
+
+    .add-pel-btn { display:flex; align-items:center; gap:6px; background:var(--gold-light); color:#7A5C00; border:1.5px dashed var(--gold); border-radius:var(--radius-sm); padding:12px 16px; font-size:13px; font-weight:700; cursor:pointer; margin-top:14px; width:100%; justify-content:center; font-family:'Plus Jakarta Sans',sans-serif; transition:background 0.15s; }
+    .add-pel-btn:hover { background:var(--gold); }
+
+    .calc-btn { width:100%; background:linear-gradient(135deg,var(--green-mid),var(--green-deep)); color:var(--white); border:none; border-radius:var(--radius); padding:18px; font-size:16px; font-weight:800; font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer; box-shadow:0 6px 24px rgba(26,107,74,0.35); transition:transform 0.1s; }
+    .calc-btn:active { transform:scale(0.98); }
+
+    /* RESULTS */
+    .results { display:none; }
+    .results.show { display:block; animation:slideUp 0.4s ease; }
+    @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+    .result-hero { background:linear-gradient(135deg,var(--green-deep) 0%,var(--green-mid) 100%); border-radius:var(--radius); padding:24px 20px; color:var(--white); margin-bottom:16px; position:relative; overflow:hidden; }
+    .result-hero::after { content:''; position:absolute; width:180px; height:180px; background:rgba(46,204,138,0.1); border-radius:50%; bottom:-60px; right:-30px; }
+    .result-hero-label { font-size:11.5px; color:var(--green-pale); font-weight:600; letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; }
+    .result-hero-amount { font-family:'DM Serif Display',serif; font-size:34px; color:var(--white); margin-bottom:4px; }
+    .result-hero-sub { font-size:12.5px; color:rgba(255,255,255,0.65); }
+
+    .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+    .stat-card { background:var(--white); border-radius:var(--radius-sm); padding:16px; box-shadow:var(--shadow); }
+    .stat-card-label { font-size:11px; font-weight:700; color:var(--ink-60); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:6px; }
+    .stat-card-value { font-size:17px; font-weight:800; color:var(--ink); }
+    .stat-card-value.green { color:var(--green-mid); }
+    .stat-card-value.gold  { color:#B8860B; }
+    .stat-card-value.red   { color:var(--red-warn); }
+
+    #period-summary-box { background:var(--white); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); margin-bottom:16px; }
+    .psb-header { background:var(--green-deep); color:var(--white); padding:12px 16px; font-size:12px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; }
+    .period-row { display:flex; align-items:center; justify-content:space-between; padding:13px 16px; border-bottom:1px solid var(--ink-20); gap:10px; }
+    .period-row:last-child { border-bottom:none; }
+    .period-left { display:flex; align-items:center; gap:10px; }
+    .period-badge { font-size:10px; font-weight:800; letter-spacing:1px; padding:3px 8px; border-radius:6px; background:var(--green-pale); color:var(--green-deep); white-space:nowrap; flex-shrink:0; }
+    .period-badge.float { background:var(--gold-light); color:#7A5C00; }
+    .period-name { font-size:12.5px; font-weight:700; color:var(--ink); }
+    .period-meta { font-size:11px; color:var(--ink-60); margin-top:2px; }
+    .period-cicilan { font-size:15px; font-weight:800; color:var(--green-deep); white-space:nowrap; text-align:right; }
+    .period-cicilan span { font-size:11px; font-weight:600; color:var(--ink-60); }
+
+    #after-pel-box { background:var(--white); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); margin-bottom:16px; }
+    .pel-after-highlight { background: linear-gradient(90deg, rgba(245,200,66,0.08) 0%, rgba(255,255,255,0) 100%); }
+    .period-badge.pel { background: var(--red-pale); color: var(--red-warn); }
+
+    .savings-banner { background:var(--gold-light); border:2px solid var(--gold); border-radius:var(--radius); padding:18px 20px; margin-bottom:12px; }
+    .savings-banner-title { font-size:13px; font-weight:800; color:#7A5C00; margin-bottom:10px; }
+    .savings-row { display:flex; justify-content:space-between; font-size:13px; padding:4px 0; }
+    .savings-row .lbl { color:var(--ink-60); }
+    .savings-row .val { font-weight:700; }
+    .savings-row .val.pos { color:var(--green-mid); }
+    .savings-row .val.neg { color:var(--red-warn); }
+    .savings-divider { border-top:1.5px solid var(--gold); margin-top:8px; padding-top:8px; }
+    #savings-container { margin-bottom:4px; }
+
+    .schedule-card { background:var(--white); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); margin-bottom:16px; }
+    .schedule-header { background:var(--green-deep); color:var(--white); padding:14px 16px; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:space-between; }
+    .schedule-table-wrap { overflow-x:auto; }
+    .schedule-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .schedule-table th { background:var(--cream); padding:10px 12px; text-align:right; font-weight:700; color:var(--ink-60); font-size:11px; white-space:nowrap; }
+    .schedule-table th:first-child { text-align:center; }
+    .schedule-table td { padding:9px 12px; text-align:right; border-bottom:1px solid var(--ink-20); color:var(--ink); white-space:nowrap; }
+    .schedule-table td:first-child { text-align:center; font-weight:700; color:var(--ink-60); }
+    .schedule-table tr.pel-row td { background:var(--gold-light); font-weight:700; }
+    .schedule-table tr.last-row td { border-bottom:none; font-weight:800; background:var(--green-pale); }
+    .schedule-table tr.period-sep td { background:var(--green-deep); color:var(--white); font-size:11px; font-weight:700; padding:7px 12px; text-align:left; }
+
+    .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:var(--white); border-top:1px solid var(--ink-20); display:flex; z-index:200; }
+    .bottom-nav-btn { flex:1; padding:12px 8px 16px; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10.5px; font-weight:700; color:var(--ink-60); background:none; border:none; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; }
+    .bottom-nav-btn.active { color:var(--green-mid); }
+    .bottom-nav-btn svg { width:22px; height:22px; }
+
+    .about-section { padding:24px 16px 100px; max-width:520px; margin:0 auto; }
+    .about-card { background:var(--white); border-radius:var(--radius); padding:20px; margin-bottom:14px; box-shadow:var(--shadow); }
+    .about-card h3 { font-size:15px; font-weight:800; color:var(--green-deep); margin-bottom:10px; }
+    .about-card p, .about-card li { font-size:13.5px; color:var(--ink-60); line-height:1.7; margin-bottom:8px; }
+    .about-card ul { padding-left:18px; }
+    .formula-box { background:var(--cream); border-radius:var(--radius-sm); padding:12px 16px; font-size:13px; font-family:monospace; color:var(--green-deep); margin-top:8px; line-height:1.8; }
+
+    .info-chip { display:inline-flex; align-items:center; background:var(--green-pale); color:var(--green-deep); border-radius:20px; padding:4px 10px; font-size:11.5px; font-weight:700; gap:4px; margin-bottom:12px; }
+    .hidden { display:none !important; }
+
+    @media (max-width:380px) {
+      .result-hero-amount { font-size:26px; }
+      .stat-card-value { font-size:14px; }
+      .pel-grid { grid-template-columns:1fr; }
+      .pel-full { grid-column:unset; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">KPR<span>Pintar</span></div>
+  <div class="topbar-tag">SIMULASI</div>
+</div>
+
+<div id="page-calc">
+  <div class="hero">
+    <div class="hero-label">Bunga Bertingkat</div>
+    <div class="hero-title">Simulasi KPR<br/>Fix + Floating</div>
+    <div class="hero-sub">Hitung cicilan per periode, efek multi pelunasan awal, dan total penghematan.</div>
+  </div>
+
+  <div class="main">
+
+    <!-- DATA PINJAMAN -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Data Pinjaman</div>
+      <div class="field">
+        <label>Harga Properti</label>
+        <div class="input-wrap">
+          <span class="input-prefix">Rp</span>
+          <input type="text" inputmode="numeric" id="s-harga" class="has-prefix" placeholder="1.000.000.000"
+            oninput="onCurrencyInput(this, syncDP)" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Uang Muka (DP) — <span id="s-dp-pct">20</span>%</label>
+        <div class="input-wrap">
+          <span class="input-prefix">Rp</span>
+          <input type="text" inputmode="numeric" id="s-dp" class="has-prefix" placeholder="200.000.000"
+            oninput="onCurrencyInput(this, syncDPFromInput)" />
+        </div>
+        <div class="slider-wrap">
+          <input type="range" id="s-dp-slider" min="5" max="50" value="20" step="1" oninput="syncDPFromSlider()" />
+          <div class="slider-labels"><span>5%</span><span>50%</span></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Total Tenor</label>
+        <div class="input-wrap">
+          <input type="number" id="s-tenor" placeholder="20" value="20" min="1" max="35" />
+          <span class="input-suffix">thn</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PERIODE BUNGA BERTINGKAT -->
+    <div class="card">
+      <div class="card-title"><span class="dot"></span>Periode Suku Bunga Bertingkat</div>
+      <div class="info-chip">📋 Total durasi periode harus sama dengan tenor</div>
+      <table class="step-table">
+        <thead>
+          <tr>
+            <th>Thn ke-</th>
+            <th>Durasi (thn)</th>
+            <th>Bunga (%)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="step-tbody"></tbody>
+      </table>
+      <button class="add-step-btn" onclick="addStep()">+ Tambah Periode</button>
+    </div>
+
+    <!-- MULTI PELUNASAN AWAL -->
+    <div class="pel-card">
+      <div class="pel-card-hdr">
+        <div class="pel-card-title"><span class="dot"></span>Pelunasan Awal</div>
+        <button class="toggle" id="pel-toggle" onclick="togglePel()"></button>
+      </div>
+      <div id="pel-body" class="hidden">
+        <div class="pel-section-body">
+          <div class="pel-hint">Beberapa bank mengizinkan 2–3 kali pelunasan. Tiap event dihitung berurutan terhadap sisa jadwal sebelumnya.</div>
+          <div class="pel-list" id="pel-list"></div>
+          <button class="add-pel-btn" onclick="addPel()">💰 Tambah Event Pelunasan</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="calc-btn" onclick="hitung()">🔢 Hitung Sekarang</button>
+
+    <!-- RESULTS -->
+    <div class="results" id="results-section">
+      <div style="height:20px"></div>
+      <div class="result-hero">
+        <div class="result-hero-label">Total Kewajiban</div>
+        <div class="result-hero-amount" id="res-total">—</div>
+        <div class="result-hero-sub" id="res-sub">—</div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-card-label">Pokok KPR</div><div class="stat-card-value" id="res-pokok">—</div></div>
+        <div class="stat-card"><div class="stat-card-label">Total Bunga</div><div class="stat-card-value red" id="res-bunga">—</div></div>
+        <div class="stat-card"><div class="stat-card-label">Cicilan Awal</div><div class="stat-card-value green" id="res-cicilan">—</div></div>
+        <div class="stat-card"><div class="stat-card-label">Tenor Efektif</div><div class="stat-card-value gold" id="res-tenor">—</div></div>
+      </div>
+      <div id="period-summary-box" style="display:none"><div class="psb-header">📶 Cicilan Per Periode</div></div>
+      <div id="after-pel-box" style="display:none;margin-top:16px"></div>
+      <div id="savings-container"></div>
+      <div class="schedule-card">
+        <div class="schedule-header">
+          <span>📅 Jadwal Cicilan</span>
+          <span id="sch-count" style="font-size:11px;opacity:0.7"></span>
+        </div>
+        <div class="schedule-table-wrap">
+          <table class="schedule-table">
+            <thead><tr><th>Bln</th><th>Cicilan</th><th>Pokok</th><th>Bunga</th><th>Sisa</th></tr></thead>
+            <tbody id="schedule-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ABOUT PAGE -->
+<div id="page-about" class="hidden">
+  <div class="hero">
+    <div class="hero-label">Panduan</div>
+    <div class="hero-title">Cara Kerja<br/>Kalkulator</div>
+    <div class="hero-sub">Pahami metode perhitungan yang digunakan.</div>
+  </div>
+  <div class="about-section">
+    <div class="about-card">
+      <h3>📶 Bunga Bertingkat</h3>
+      <p>Tiap ganti periode, bank hitung ulang cicilan (anuitas) pakai sisa pokok + bunga baru + sisa tenor keseluruhan.</p>
+      <div class="formula-box">Cicilan = P × [r(1+r)ⁿ] / [(1+r)ⁿ − 1]<br/>P = sisa pokok periode dimulai<br/>r = bunga bulanan baru<br/>n = total sisa bulan tenor</div>
+      <p style="margin-top:10px">Itulah kenapa cicilan <b>loncat naik</b> saat masuk floating — bunga naik tapi pokok belum banyak terbayar.</p>
+    </div>
+    <div class="about-card">
+      <h3>💰 Multi Pelunasan Awal</h3>
+      <p>Beberapa bank mengizinkan 2–3 kali pelunasan di bulan berbeda. Tiap event dihitung berurutan terhadap jadwal yang sudah dimodifikasi event sebelumnya.</p>
+      <ul>
+        <li><b>Kurangi Tenor:</b> Cicilan tetap, selesai lebih cepat.</li>
+        <li><b>Kurangi Cicilan:</b> Tenor tetap, cicilan bulanan turun.</li>
+      </ul>
+      <div class="formula-box">Net Hemat = Σ(Bunga Dihemat) − Σ(Penalti)</div>
+    </div>
+    <div class="about-card">
+      <h3>⚠️ Disclaimer</h3>
+      <p>Simulasi ini hanya estimasi. Angka aktual dapat berbeda sesuai kebijakan masing-masing bank. Konsultasikan dengan RM bank sebelum keputusan final.</p>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-nav">
+  <button class="bottom-nav-btn active" onclick="showPage('calc')" id="nav-calc">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+    </svg>
+    Kalkulator
+  </button>
+  <button class="bottom-nav-btn" onclick="showPage('about')" id="nav-about">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
+    </svg>
+    Panduan
+  </button>
+</div>
+
+<script>
+/* ── HELPERS ── */
+const $ = id => document.getElementById(id);
+const fmt = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+const fmtS = n => {
+  if (n >= 1e9) return 'Rp ' + (n/1e9).toFixed(2).replace('.',',') + ' M';
+  if (n >= 1e6) return 'Rp ' + (n/1e6).toFixed(1).replace('.',',') + ' jt';
+  return fmt(n);
+};
+function rawVal(id) {
+  const el = $(id); if (!el) return 0;
+  return parseFloat(el.value.replace(/\./g,'').replace(',','.')) || 0;
+}
+function setCur(id, num) {
+  const el = $(id); if (!el) return;
+  el.value = num > 0 ? Math.round(num).toLocaleString('id-ID') : '';
+}
+function onCurrencyInput(el, cb) {
+  const cfe = el.value.length - (el.selectionStart || 0);
+  const num = parseInt(el.value.replace(/\D/g,'')) || 0;
+  el.value = num > 0 ? num.toLocaleString('id-ID') : '';
+  const nc = Math.max(0, el.value.length - cfe);
+  try { el.setSelectionRange(nc, nc); } catch(e) {}
+  if (cb) cb();
+}
+
+/* ── NAV ── */
+function showPage(p) {
+  $('page-calc').classList.toggle('hidden', p!=='calc');
+  $('page-about').classList.toggle('hidden', p!=='about');
+  $('nav-calc').classList.toggle('active', p==='calc');
+  $('nav-about').classList.toggle('active', p==='about');
+}
+
+/* ── DP ── */
+function syncDP() {
+  const h = rawVal('s-harga'), pct = +$('s-dp-slider').value||20;
+  setCur('s-dp', Math.round(h*pct/100)); $('s-dp-pct').textContent = pct;
+}
+function syncDPFromInput() {
+  const h = rawVal('s-harga')||1, dp = rawVal('s-dp');
+  const pct = Math.min(Math.max(Math.round(dp/h*100),5),50);
+  $('s-dp-slider').value = pct; $('s-dp-pct').textContent = pct;
+}
+function syncDPFromSlider() {
+  const h = rawVal('s-harga'), pct = +$('s-dp-slider').value||20;
+  setCur('s-dp', Math.round(h*pct/100)); $('s-dp-pct').textContent = pct;
+}
+
+/* ── STEP TABLE ── */
+let steps = [{dur:1,rate:5.0},{dur:2,rate:8.5},{dur:17,rate:12.0}];
+function renderSteps() {
+  const tb = $('step-tbody'); tb.innerHTML = '';
+  let yr = 1;
+  steps.forEach((s,i) => {
+    const end = yr + s.dur - 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:var(--ink-60);font-size:11px;white-space:nowrap">${yr}–${end}</td>
+      <td><input type="number" value="${s.dur}" min="1"
+        onchange="steps[${i}].dur=Math.max(1,parseInt(this.value)||1);renderSteps()"></td>
+      <td><input type="number" value="${s.rate}" step="0.1" min="0"
+        onchange="steps[${i}].rate=parseFloat(this.value)||0"></td>
+      <td>${steps.length>1?`<button class="remove-btn" onclick="steps.splice(${i},1);renderSteps()">✕</button>`:''}
+      </td>`;
+    tb.appendChild(tr); yr += s.dur;
+  });
+}
+function addStep() { steps.push({dur:5,rate:12.0}); renderSteps(); }
+
+/* ── MULTI PELUNASAN ── */
+let pelOn = false, pelEvents = [], pelCtr = 0;
+
+function togglePel() {
+  pelOn = !pelOn;
+  $('pel-toggle').classList.toggle('on', pelOn);
+  $('pel-body').classList.toggle('hidden', !pelOn);
+  if (pelOn && pelEvents.length===0) addPel();
+}
+
+function addPel() {
+  const id = ++pelCtr;
+  pelEvents.push({id, bulan:24, amount:100000000, option:'reduce-tenor', penalti:1});
+  renderPel();
+}
+function removePel(id) { pelEvents = pelEvents.filter(e=>e.id!==id); renderPel(); }
+
+function renderPel() {
+  const list = $('pel-list'); list.innerHTML = '';
+  pelEvents.forEach((ev, idx) => {
+    const div = document.createElement('div');
+    div.className = 'pel-event';
+    div.innerHTML = `
+      <div class="pel-event-hdr">
+        <div class="pel-event-label">
+          <span class="pel-num">${idx+1}</span>
+          Pelunasan ke-${idx+1}
+        </div>
+        ${pelEvents.length>1 ? `<button class="remove-btn" onclick="removePel(${ev.id})">✕ Hapus</button>` : ''}
+      </div>
+      <div class="pel-grid">
+        <div class="field">
+          <label>Bulan ke-</label>
+          <div class="input-wrap">
+            <input type="number" id="pb-${ev.id}" value="${ev.bulan}" min="1"
+              onchange="pelEvents.find(e=>e.id===${ev.id}).bulan=parseInt(this.value)||1">
+            <span class="input-suffix">bln</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Penalti Bank</label>
+          <div class="input-wrap">
+            <input type="number" id="pp-${ev.id}" value="${ev.penalti}" step="0.1" min="0" class="has-suffix"
+              onchange="pelEvents.find(e=>e.id===${ev.id}).penalti=parseFloat(this.value)||0">
+            <span class="input-suffix">%</span>
+          </div>
+        </div>
+        <div class="field pel-full">
+          <label>Jumlah Pelunasan</label>
+          <div class="input-wrap">
+            <span class="input-prefix">Rp</span>
+            <input type="text" inputmode="numeric" id="pa-${ev.id}" class="has-prefix" placeholder="100.000.000"
+              oninput="onCurrencyInput(this);pelEvents.find(e=>e.id===${ev.id}).amount=rawVal('pa-${ev.id}')">
+          </div>
+        </div>
+        <div class="field pel-full">
+          <label>Opsi Setelah Pelunasan</label>
+          <select id="po-${ev.id}" onchange="pelEvents.find(e=>e.id===${ev.id}).option=this.value">
+            <option value="reduce-tenor">Kurangi Tenor (cicilan tetap)</option>
+            <option value="reduce-cicilan">Kurangi Cicilan (tenor tetap)</option>
+          </select>
+        </div>
+      </div>`;
+    list.appendChild(div);
+    setCur(`pa-${ev.id}`, ev.amount);
+    if (ev.option==='reduce-cicilan') $(`po-${ev.id}`).value='reduce-cicilan';
+  });
+}
+
+/* ── MATH ── */
+function anuitas(P, r, n) {
+  if (r===0) return P/n;
+  return P*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+}
+
+/* ── HITUNG ── */
+function hitung() {
+  const harga = rawVal('s-harga');
+  const dp    = rawVal('s-dp');
+  const tenor = parseInt($('s-tenor').value)||0;
+  const pokok = harga - dp;
+  const totalBulan = tenor*12;
+
+  // Build base stepping schedule
+  let schedule=[], periodSummary=[], sisa=pokok, bln=0, cicilanAwal;
+
+  for (let i=0; i<steps.length && sisa>0.01 && bln<totalBulan; i++) {
+    const s=steps[i], r=s.rate/100/12;
+    const remain = totalBulan-bln;
+    const dur    = Math.min(s.dur*12, remain);
+    if (dur<=0) break;
+
+    const cicilan = anuitas(sisa,r,remain);
+    if (i===0) cicilanAwal=cicilan;
+
+    const sisaAwal=sisa, blnStart=bln+1;
+    for (let m=1; m<=dur && sisa>0.01; m++) {
+      bln++;
+      const bunga=sisa*r, pkok=Math.min(cicilan-bunga,sisa);
+      sisa=Math.max(sisa-pkok,0);
+      schedule.push({bln,cicilan,pkok,bunga,sisa,pIdx:i});
+    }
+
+    const y0=steps.slice(0,i).reduce((a,s)=>a+s.dur,0)+1;
+    periodSummary.push({label:`Periode ${i+1} (Thn ${y0}–${y0+s.dur-1})`,isFloat:i>0,rate:s.rate,cicilan,blnStart,blnEnd:bln,sisaAwal});
+  }
+
+  // Sync pelunasan inputs then sort chronologically
+  pelEvents.forEach(ev => {
+    ev.bulan   = parseInt($(`pb-${ev.id}`)?.value)||ev.bulan;
+    ev.amount  = rawVal(`pa-${ev.id}`);
+    ev.penalti = parseFloat($(`pp-${ev.id}`)?.value)||ev.penalti;
+    ev.option  = $(`po-${ev.id}`)?.value||ev.option;
+  });
+
+  const events = pelOn ? [...pelEvents].sort((a,b)=>a.bulan-b.bulan) : [];
+  const savingsList=[];
+
+  for (const ev of events) {
+    const idx = schedule.findIndex(r=>r.bln===ev.bulan);
+    if (idx<0 || idx>=schedule.length-1) continue;
+
+    const pre   = schedule.slice(0, idx+1);
+    const sisaBefore = pre[pre.length-1].sisa;
+    const sisaAfter  = sisaBefore - ev.amount;
+    if (sisaAfter<=0) continue;
+
+    const penaltiAmt     = ev.amount * ev.penalti/100;
+    const bungaTanpa     = schedule.slice(idx+1).reduce((a,r)=>a+r.bunga,0);
+    const row            = pre[pre.length-1];
+    const r2             = row.bunga / (row.sisa + row.pkok);
+
+    let newRows=[];
+    if (ev.option==='reduce-tenor') {
+      const c=row.cicilan; let s2=sisaAfter, m2=ev.bulan+1;
+      while (s2>0.01 && m2<=ev.bulan+600) {
+        const b2=s2*r2, p2=Math.min(c-b2,s2);
+        s2=Math.max(s2-p2,0);
+        newRows.push({bln:m2,cicilan:c,pkok:p2,bunga:b2,sisa:s2}); m2++;
+      }
+    } else {
+      const rem=schedule.length-idx-1, nc=anuitas(sisaAfter,r2,rem);
+      let s2=sisaAfter, m2=ev.bulan+1;
+      for (let k=0;k<rem&&s2>0.01;k++,m2++) {
+        const b2=s2*r2, p2=Math.min(nc-b2,s2);
+        s2=Math.max(s2-p2,0);
+        newRows.push({bln:m2,cicilan:nc,pkok:p2,bunga:b2,sisa:s2});
+      }
+    }
+
+    const bungaDengan  = newRows.reduce((a,r)=>a+r.bunga,0);
+    const bungaHemat   = bungaTanpa - bungaDengan;
+    const tenorHemat   = schedule.length - (pre.length+newRows.length);
+    const cicilanBaru  = newRows.length>0 ? newRows[0].cicilan : 0;
+    const blnSetelah   = ev.bulan+1;
+    const blnAkhir     = newRows.length>0 ? newRows[newRows.length-1].bln : ev.bulan;
+
+    pre[pre.length-1] = {...pre[pre.length-1], isPelRow:true};
+    schedule = [...pre, ...newRows];
+    savingsList.push({
+      label:`Pelunasan Bln ke-${ev.bulan}`, amount:ev.amount,
+      penaltiAmt, bungaHemat, tenorHemat, netHemat:bungaHemat-penaltiAmt,
+      cicilanBaru, sisaAfter, blnSetelah, blnAkhir,
+      option: ev.option,
+    });
+  }
+
+  /* ── RENDER ── */
+  const totalCicilan = schedule.reduce((a,r)=>a+r.cicilan,0);
+  const totalBunga   = schedule.reduce((a,r)=>a+r.bunga,0);
+  const tenorEfektif = schedule.length;
+
+  $('res-total').textContent = fmt(totalCicilan);
+  $('res-sub').textContent   = `dalam ${tenorEfektif} bulan (${(tenorEfektif/12).toFixed(1)} tahun)`;
+  $('res-pokok').textContent  = fmtS(pokok);
+  $('res-bunga').textContent  = fmtS(totalBunga);
+  $('res-cicilan').textContent= fmtS(cicilanAwal)+'/bln';
+  $('res-tenor').textContent  = `${tenorEfektif} bln`;
+
+  // Period summary
+  const psb = $('period-summary-box');
+  psb.innerHTML = '<div class="psb-header">📶 Cicilan Per Periode</div>';
+  periodSummary.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'period-row';
+    row.innerHTML = `
+      <div class="period-left">
+        <div class="period-badge ${p.isFloat?'float':''}">${p.isFloat?'FLOAT':'FIX'}</div>
+        <div>
+          <div class="period-name">${p.label} · ${p.rate}%/thn</div>
+          <div class="period-meta">Bln ${p.blnStart}–${p.blnEnd} · Pokok awal: ${fmtS(p.sisaAwal)}</div>
+        </div>
+      </div>
+      <div class="period-cicilan">${fmt(p.cicilan)}<span>/bln</span></div>`;
+    psb.appendChild(row);
+  });
+  psb.style.display='block';
+
+  // After-pelunasan cicilan summary table
+  const apb = $('after-pel-box');
+  if (pelOn && savingsList.length>0) {
+    apb.innerHTML = '<div class="psb-header">💰 Cicilan Per Periode Setelah Pelunasan</div>';
+
+    // Row: sebelum pelunasan pertama (cicilan awal)
+    const firstPelBln = savingsList[0].blnSetelah - 1;
+    const cicilanSebelum = cicilanAwal;
+    const addRow = (badge, badgeClass, label, meta, cicilan, highlight) => {
+      const row = document.createElement('div');
+      row.className = 'period-row' + (highlight ? ' pel-after-highlight' : '');
+      row.innerHTML = `
+        <div class="period-left">
+          <div class="period-badge ${badgeClass}">${badge}</div>
+          <div>
+            <div class="period-name">${label}</div>
+            <div class="period-meta">${meta}</div>
+          </div>
+        </div>
+        <div class="period-cicilan">${fmt(cicilan)}<span>/bln</span></div>`;
+      apb.appendChild(row);
+    };
+
+    addRow('AWAL','','Sebelum Pelunasan',`Bln 1–${firstPelBln} · Cicilan bertingkat per periode`,cicilanSebelum,false);
+
+    savingsList.forEach((s,i) => {
+      const opsiLabel = s.option==='reduce-tenor' ? 'Kurangi Tenor' : 'Kurangi Cicilan';
+      const meta = `Bln ${s.blnSetelah}–${s.blnAkhir} · Pokok berkurang ${fmtS(s.amount)} · ${opsiLabel}`;
+      addRow(`#${i+1}`,'float',`Setelah ${s.label}`,meta,s.cicilanBaru,true);
+    });
+
+    apb.style.display='block';
+  } else {
+    apb.style.display='none';
+  }
+
+  // Savings
+  const sc = $('savings-container'); sc.innerHTML='';
+  savingsList.forEach(s => {
+    const d=document.createElement('div'); d.className='savings-banner';
+    d.innerHTML=`
+      <div class="savings-banner-title">💰 ${s.label} — ${fmtS(s.amount)}</div>
+      <div class="savings-row"><span class="lbl">Penalti dibayar</span><span class="val neg">${fmt(s.penaltiAmt)}</span></div>
+      <div class="savings-row"><span class="lbl">Bunga dihemat</span><span class="val pos">${fmt(Math.max(s.bungaHemat,0))}</span></div>
+      <div class="savings-row"><span class="lbl">Tenor berkurang</span><span class="val pos">${s.tenorHemat>0?s.tenorHemat+' bulan':'Tenor tetap'}</span></div>
+      <div class="savings-row savings-divider">
+        <span class="lbl" style="font-weight:700;color:var(--ink)">Net Penghematan</span>
+        <span class="val pos" style="font-size:15px">${fmt(Math.max(s.netHemat,0))}</span>
+      </div>`;
+    sc.appendChild(d);
+  });
+  if (savingsList.length>1) {
+    const totPenalti  = savingsList.reduce((a,s)=>a+s.penaltiAmt,0);
+    const totBunga    = savingsList.reduce((a,s)=>a+s.bungaHemat,0);
+    const totTenor    = savingsList.reduce((a,s)=>a+s.tenorHemat,0);
+    const totNet      = savingsList.reduce((a,s)=>a+s.netHemat,0);
+    const d=document.createElement('div'); d.className='savings-banner';
+    d.style.cssText='border-color:var(--green-light);background:var(--green-pale)';
+    d.innerHTML=`
+      <div class="savings-banner-title" style="color:var(--green-deep)">🎉 Total ${savingsList.length} Event Pelunasan</div>
+      <div class="savings-row"><span class="lbl">Total penalti</span><span class="val neg">${fmt(totPenalti)}</span></div>
+      <div class="savings-row"><span class="lbl">Total bunga dihemat</span><span class="val pos">${fmt(Math.max(totBunga,0))}</span></div>
+      <div class="savings-row"><span class="lbl">Total tenor berkurang</span><span class="val pos">${totTenor>0?totTenor+' bulan':'Tenor tetap'}</span></div>
+      <div class="savings-row savings-divider">
+        <span class="lbl" style="font-weight:800;color:var(--ink)">Net Hemat Keseluruhan</span>
+        <span class="val pos" style="font-size:16px">${fmt(Math.max(totNet,0))}</span>
+      </div>`;
+    sc.appendChild(d);
+  }
+
+  // Schedule table
+  const tbody=$('schedule-body'); tbody.innerHTML='';
+  $('sch-count').textContent=`${schedule.length} bulan`;
+  let lastP=-1;
+  schedule.forEach((r,i) => {
+    if (r.pIdx!==undefined && r.pIdx!==lastP) {
+      lastP=r.pIdx;
+      const ps=periodSummary[r.pIdx];
+      if (ps) {
+        const sep=document.createElement('tr'); sep.className='period-sep';
+        sep.innerHTML=`<td colspan="5">📶 ${ps.label} — ${ps.rate}%/thn — ${fmt(ps.cicilan)}/bln</td>`;
+        tbody.appendChild(sep);
+      }
+    }
+    const tr=document.createElement('tr');
+    if (r.isPelRow) tr.classList.add('pel-row');
+    if (i===schedule.length-1) tr.classList.add('last-row');
+    tr.innerHTML=`
+      <td>${r.bln}${r.isPelRow?' 💰':''}</td>
+      <td>${fmtS(r.cicilan)}</td><td>${fmtS(r.pkok)}</td>
+      <td>${fmtS(r.bunga)}</td><td>${fmtS(r.sisa)}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  $('results-section').classList.add('show');
+  setTimeout(()=>$('results-section').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+/* ── INIT ── */
+window.addEventListener('DOMContentLoaded', ()=>{
+  setCur('s-harga',1000000000);
+  setCur('s-dp',200000000);
+  renderSteps();
+});
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
