@@ -145,9 +145,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
 .schedule-table tr.last-row td { border-bottom:none; font-weight:800; background:var(--green-pale); }
 .schedule-table tr.period-sep td { background:var(--green-deep); color:var(--white); font-size:11px; font-weight:700; padding:7px 12px; text-align:left; }
 
-/* ──────────────────────────────────────────────
-   OPTIMASI FEATURE STYLES
-────────────────────────────────────────────── */
+/* OPTIMASI FEATURE STYLES */
 .optim-card { background: linear-gradient(135deg, #0B3D2E 0%, #1565C0 100%); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: 0 6px 32px rgba(11,61,46,0.22); color: var(--white); }
 .optim-card-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:0; }
 .optim-card-title { font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:8px; color: rgba(255,255,255,0.85); }
@@ -175,7 +173,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
 .optim-run-btn:active { transform:scale(0.97); }
 .optim-run-btn:hover { box-shadow: 0 6px 24px rgba(245,200,66,0.6); }
 
-/* Optimasi results */
 .optim-results { display:none; }
 .optim-results.show { display:block; animation:slideUp 0.4s ease; }
 .optim-winner-banner { background:linear-gradient(135deg, var(--gold) 0%, #E6A800 100%); border-radius:var(--radius); padding:20px; margin-bottom:14px; box-shadow: 0 4px 20px rgba(245,200,66,0.4); }
@@ -221,7 +218,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
 .cmp-table .diff-pos { color:var(--green-mid); font-weight:700; }
 .cmp-table .diff-neg { color:var(--red-warn); font-weight:700; }
 
-/* bottom nav */
 .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:var(--white); border-top:1px solid var(--ink-20); display:flex; z-index:200; }
 .bottom-nav-btn { flex:1; padding:12px 8px 16px; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10.5px; font-weight:700; color:var(--ink-60); background:none; border:none; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; }
 .bottom-nav-btn.active { color:var(--green-mid); }
@@ -322,9 +318,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
       </div>
     </div>
 
-    <!-- ══════════════════════════════════════════
-         OPTIMASI PELUNASAN — NEW FEATURE
-    ══════════════════════════════════════════ -->
+    <!-- OPTIMASI PELUNASAN -->
     <div class="optim-card">
       <div class="optim-card-hdr">
         <div class="optim-card-title"><span class="dot"></span>⚡ Optimasi Pelunasan</div>
@@ -628,177 +622,263 @@ function toggleOptim() {
   $('optim-body').classList.toggle('hidden', !optimOn);
 }
 
-/* Core KPR engine: simulate pelunasan events, return total bunga, tenor efektif, net hemat */
+/* ── ANUITAS ── */
 function anuitas(P, r, n) {
-  if (r===0) return P/n;
-  return P*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
+  if (r === 0) return P / n;
+  return P * r * Math.pow(1+r, n) / (Math.pow(1+r, n) - 1);
 }
 
+/*
+ * buildBaseSchedule
+ * -----------------
+ * Each row now carries TWO extra fields so downstream prepayment logic
+ * can work correctly without re-deriving anything from bunga/sisa:
+ *   row.monthlyRate  — the exact monthly interest rate that was active
+ *   row.cicilan      — the annuity installment active for that month
+ *   row.pIdx         — which step-period index this row belongs to
+ *
+ * This is the single source of truth. applyPelunasanToSchedule uses
+ * row.monthlyRate to extend the tail rows after each prepayment.
+ */
 function buildBaseSchedule(pokok, totalBulan) {
-  let schedule=[], sisa=pokok, bln=0, cicilanAwal=0, periodSummary=[];
-  for (let i=0; i<steps.length && sisa>0.01 && bln<totalBulan; i++) {
-    const s=steps[i], r=s.rate/100/12;
-    const remain=totalBulan-bln;
-    const dur=Math.min(s.dur*12,remain);
-    if (dur<=0) break;
-    const cicilan=anuitas(sisa,r,remain);
-    if (i===0) cicilanAwal=cicilan;
-    const sisaAwal=sisa, blnStart=bln+1;
-    for (let m=1; m<=dur && sisa>0.01; m++) {
+  let schedule = [], sisa = pokok, bln = 0;
+  let cicilanAwal = 0, periodSummary = [];
+
+  for (let i = 0; i < steps.length && sisa > 0.01 && bln < totalBulan; i++) {
+    const s = steps[i];
+    const r = s.rate / 100 / 12;
+    const remainBulan = totalBulan - bln;          // sisa tenor dari sekarang
+    const durBulan = Math.min(s.dur * 12, remainBulan);
+    if (durBulan <= 0) break;
+
+    // Annuity computed over FULL remaining tenor (not just this period's duration).
+    // This matches standard Indonesian bank KPR practice.
+    const cicilan = anuitas(sisa, r, remainBulan);
+    if (i === 0) cicilanAwal = cicilan;
+
+    const sisaAwal = sisa;
+    const blnStart = bln + 1;
+
+    for (let m = 1; m <= durBulan && sisa > 0.01; m++) {
       bln++;
-      const bunga=sisa*r, pkok=Math.min(cicilan-bunga,sisa);
-      sisa=Math.max(sisa-pkok,0);
-      schedule.push({bln,cicilan,pkok,bunga,sisa,pIdx:i});
+      const bunga = sisa * r;
+      const pkok  = Math.min(cicilan - bunga, sisa);
+      sisa = Math.max(sisa - pkok, 0);
+      schedule.push({
+        bln,
+        cicilan,
+        pkok,
+        bunga,
+        sisa,
+        pIdx: i,
+        monthlyRate: r,   // ← stored explicitly; never re-derived
+      });
     }
-    const y0=steps.slice(0,i).reduce((a,s)=>a+s.dur,0)+1;
-    periodSummary.push({label:`Periode ${i+1} (Thn ${y0}–${y0+s.dur-1})`,isFloat:i>0,rate:s.rate,cicilan,blnStart,blnEnd:bln,sisaAwal});
+
+    const y0 = steps.slice(0, i).reduce((a, s) => a + s.dur, 0) + 1;
+    periodSummary.push({
+      label:    `Periode ${i+1} (Thn ${y0}–${y0 + s.dur - 1})`,
+      isFloat:  i > 0,
+      rate:     s.rate,
+      cicilan,
+      blnStart,
+      blnEnd:   bln,
+      sisaAwal,
+    });
   }
-  return {schedule, cicilanAwal, periodSummary};
+
+  return { schedule, cicilanAwal, periodSummary };
 }
 
+/*
+ * applyPelunasanToSchedule
+ * ------------------------
+ * Applies ONE prepayment event to an existing schedule and returns a new
+ * schedule plus savings statistics.
+ *
+ * Key fix: the monthly rate for tail rows is read from the LAST row's
+ * stored `monthlyRate` field — never re-derived from bunga/sisa arithmetic
+ * (which was the source of the wrong-rate bug causing earlier periods to
+ * appear to change their installment amounts).
+ *
+ * The `cicilan` for "reduce-tenor" remains unchanged (same annuity payment,
+ * loan ends sooner). For "reduce-cicilan" a new annuity is computed over the
+ * remaining original number of rows, using the same stored rate.
+ */
+function applyPelunasanToSchedule(schedule, ev) {
+  // Find the row whose month number matches the prepayment month
+  const idx = schedule.findIndex(r => r.bln === ev.bulan);
+  if (idx < 0 || idx >= schedule.length - 1) return null; // can't apply
+
+  const pre  = schedule.slice(0, idx + 1);   // rows up to & including prepay month
+  const tail = schedule.slice(idx + 1);       // rows that would follow without prepay
+
+  const lastRow    = pre[pre.length - 1];
+  const sisaBefore = lastRow.sisa;
+  const sisaAfter  = sisaBefore - ev.amount;
+  if (sisaAfter <= 0.01) return null;         // overpayment — skip
+
+  const penaltiAmt    = ev.amount * ev.penalti / 100;
+  const bungaTanpa    = tail.reduce((a, r) => a + r.bunga, 0);
+
+  // ★ Use the stored monthly rate — do NOT re-derive from bunga/sisa
+  const r2      = lastRow.monthlyRate;
+  const cicilan = lastRow.cicilan;             // keep same annuity for reduce-tenor
+
+  let newRows = [];
+
+  if (ev.option === 'reduce-tenor') {
+    // Same monthly payment, loan ends sooner
+    let s2 = sisaAfter, m2 = ev.bulan + 1;
+    while (s2 > 0.01 && m2 <= ev.bulan + 600) {
+      const b2 = s2 * r2;
+      const p2 = Math.min(cicilan - b2, s2);
+      if (p2 <= 0) break; // safety: avoid infinite loop if rate >= cicilan
+      s2 = Math.max(s2 - p2, 0);
+      newRows.push({
+        bln: m2, cicilan, pkok: p2, bunga: b2, sisa: s2,
+        monthlyRate: r2,
+        pIdx: lastRow.pIdx,
+      });
+      m2++;
+    }
+  } else {
+    // reduce-cicilan: recalculate annuity over original remaining months
+    const remMonths = tail.length;
+    const newCicilan = anuitas(sisaAfter, r2, remMonths);
+    let s2 = sisaAfter, m2 = ev.bulan + 1;
+    for (let k = 0; k < remMonths && s2 > 0.01; k++, m2++) {
+      const b2 = s2 * r2;
+      const p2 = Math.min(newCicilan - b2, s2);
+      s2 = Math.max(s2 - p2, 0);
+      newRows.push({
+        bln: m2, cicilan: newCicilan, pkok: p2, bunga: b2, sisa: s2,
+        monthlyRate: r2,
+        pIdx: lastRow.pIdx,
+      });
+    }
+  }
+
+  const bungaDengan  = newRows.reduce((a, r) => a + r.bunga, 0);
+  const bungaHemat   = bungaTanpa - bungaDengan;
+  const tenorHemat   = tail.length - newRows.length;
+  const cicilanBaru  = newRows.length > 0 ? newRows[0].cicilan : cicilan;
+
+  // Mark the prepayment row so the schedule table highlights it
+  const markedPre = [
+    ...pre.slice(0, pre.length - 1),
+    { ...lastRow, isPelRow: true },
+  ];
+
+  return {
+    schedule:    [...markedPre, ...newRows],
+    bungaHemat,
+    penaltiAmt,
+    tenorHemat,
+    netHemat:    bungaHemat - penaltiAmt,
+    cicilanBaru,
+    sisaAfter,
+    blnSetelah:  ev.bulan + 1,
+    blnAkhir:    newRows.length > 0 ? newRows[newRows.length - 1].bln : ev.bulan,
+    option:      ev.option,
+  };
+}
+
+/*
+ * applyPelunasan (used by Optimasi feature)
+ * Applies multiple events sequentially and returns aggregate stats.
+ */
 function applyPelunasan(schedule, evList) {
   let sched = [...schedule];
   let totalBungaHemat = 0, totalPenalti = 0, totalTenorHemat = 0;
+
   for (const ev of evList) {
-    const idx = sched.findIndex(r=>r.bln===ev.bulan);
-    if (idx<0 || idx>=sched.length-1) continue;
-    const pre = sched.slice(0,idx+1);
-    const sisaBefore = pre[pre.length-1].sisa;
-    const sisaAfter = sisaBefore - ev.amount;
-    if (sisaAfter<=0) continue;
-    const penaltiAmt = ev.amount * ev.penalti/100;
-    totalPenalti += penaltiAmt;
-    const bungaTanpa = sched.slice(idx+1).reduce((a,r)=>a+r.bunga,0);
-    const row = pre[pre.length-1];
-    const r2 = row.bunga / (row.sisa + row.pkok);
-    let newRows=[];
-    if (ev.option==='reduce-tenor') {
-      const c=row.cicilan; let s2=sisaAfter, m2=ev.bulan+1;
-      while (s2>0.01 && m2<=ev.bulan+600) {
-        const b2=s2*r2, p2=Math.min(c-b2,s2);
-        s2=Math.max(s2-p2,0);
-        newRows.push({bln:m2,cicilan:c,pkok:p2,bunga:b2,sisa:s2}); m2++;
-      }
-    } else {
-      const rem=sched.length-idx-1, nc=anuitas(sisaAfter,r2,rem);
-      let s2=sisaAfter, m2=ev.bulan+1;
-      for (let k=0;k<rem&&s2>0.01;k++,m2++) {
-        const b2=s2*r2, p2=Math.min(nc-b2,s2);
-        s2=Math.max(s2-p2,0);
-        newRows.push({bln:m2,cicilan:nc,pkok:p2,bunga:b2,sisa:s2});
-      }
-    }
-    const bungaDengan = newRows.reduce((a,r)=>a+r.bunga,0);
-    totalBungaHemat += bungaTanpa - bungaDengan;
-    totalTenorHemat += sched.length - (pre.length + newRows.length);
-    pre[pre.length-1] = {...pre[pre.length-1], isPelRow:true};
-    sched = [...pre, ...newRows];
+    const result = applyPelunasanToSchedule(sched, ev);
+    if (!result) continue;
+    sched            = result.schedule;
+    totalBungaHemat += result.bungaHemat;
+    totalPenalti    += result.penaltiAmt;
+    totalTenorHemat += result.tenorHemat;
   }
-  const totalBunga = sched.reduce((a,r)=>a+r.bunga,0);
-  return { schedule:sched, totalBunga, totalBungaHemat, totalPenalti, totalTenorHemat,
-           netHemat: totalBungaHemat - totalPenalti, tenorEfektif: sched.length };
+
+  const totalBunga = sched.reduce((a, r) => a + r.bunga, 0);
+  return {
+    schedule: sched,
+    totalBunga,
+    totalBungaHemat,
+    totalPenalti,
+    totalTenorHemat,
+    netHemat:     totalBungaHemat - totalPenalti,
+    tenorEfektif: sched.length,
+  };
 }
 
 function getSplitRatios(splitVal) {
-  const map = {'50-50':[0.5,0.5],'60-40':[0.6,0.4],'70-30':[0.7,0.3],'40-60':[0.4,0.6],'30-70':[0.3,0.7]};
+  const map = {
+    '50-50':[0.5,0.5], '60-40':[0.6,0.4], '70-30':[0.7,0.3],
+    '40-60':[0.4,0.6], '30-70':[0.3,0.7],
+  };
   return map[splitVal] || [0.5,0.5];
 }
 
+/* ── OPTIMASI ── */
 function jalankanOptimasi() {
-  const harga = rawVal('s-harga');
-  const dp = rawVal('s-dp');
-  const tenor = parseInt($('s-tenor').value)||0;
-  const pokok = harga - dp;
-  const totalBulan = tenor*12;
-  const budget = rawVal('opt-budget');
-  const penaltiPct = parseFloat($('opt-penalti').value)||1;
-  const bln1 = parseInt($('opt-bln1').value)||24;
-  const bln2 = parseInt($('opt-bln2').value)||48;
+  const harga    = rawVal('s-harga');
+  const dp       = rawVal('s-dp');
+  const tenor    = parseInt($('s-tenor').value) || 0;
+  const pokok    = harga - dp;
+  const totalBulan = tenor * 12;
+  const budget   = rawVal('opt-budget');
+  const penaltiPct = parseFloat($('opt-penalti').value) || 1;
+  const bln1     = parseInt($('opt-bln1').value) || 24;
+  const bln2     = parseInt($('opt-bln2').value) || 48;
   const splitVal = $('opt-split').value;
 
-  if (!budget || budget<=0) { alert('Masukkan total dana yang tersedia.'); return; }
+  if (!budget || budget <= 0) { alert('Masukkan total dana yang tersedia.'); return; }
 
-  const {schedule: baseSchedule} = buildBaseSchedule(pokok, totalBulan);
-  const baseBunga = baseSchedule.reduce((a,r)=>a+r.bunga,0);
+  const { schedule: baseSchedule } = buildBaseSchedule(pokok, totalBulan);
 
-  const [r1,r2] = getSplitRatios(splitVal);
+  const [r1, r2] = getSplitRatios(splitVal);
   const amt1 = Math.round(budget * r1);
   const amt2 = budget - amt1;
   const splitLabel = splitVal.replace('-',' : ');
 
-  const scenarios = [];
+  const scenarios = [
+    { name: `1x di Bln ${bln1} — Kurangi Tenor`,
+      events: [{bulan:bln1, amount:budget, option:'reduce-tenor',   penalti:penaltiPct}], tag:'1x Sekaligus' },
+    { name: `1x di Bln ${bln1} — Kurangi Cicilan`,
+      events: [{bulan:bln1, amount:budget, option:'reduce-cicilan', penalti:penaltiPct}], tag:'1x Sekaligus' },
+    { name: `2x Bertahap (${splitLabel}) — Keduanya Kurangi Tenor`,
+      events: [{bulan:bln1,amount:amt1,option:'reduce-tenor',  penalti:penaltiPct},
+               {bulan:bln2,amount:amt2,option:'reduce-tenor',  penalti:penaltiPct}], tag:`2x Bertahap (${splitLabel})` },
+    { name: `2x Bertahap (${splitLabel}) — Keduanya Kurangi Cicilan`,
+      events: [{bulan:bln1,amount:amt1,option:'reduce-cicilan',penalti:penaltiPct},
+               {bulan:bln2,amount:amt2,option:'reduce-cicilan',penalti:penaltiPct}], tag:`2x Bertahap (${splitLabel})` },
+    { name: `2x Bertahap (${splitLabel}) — Tenor lalu Cicilan`,
+      events: [{bulan:bln1,amount:amt1,option:'reduce-tenor',  penalti:penaltiPct},
+               {bulan:bln2,amount:amt2,option:'reduce-cicilan',penalti:penaltiPct}], tag:`2x Bertahap (${splitLabel})` },
+    { name: `2x Bertahap (${splitLabel}) — Cicilan lalu Tenor`,
+      events: [{bulan:bln1,amount:amt1,option:'reduce-cicilan',penalti:penaltiPct},
+               {bulan:bln2,amount:amt2,option:'reduce-tenor',  penalti:penaltiPct}], tag:`2x Bertahap (${splitLabel})` },
+  ];
 
-  // Skenario 1: 1x sekaligus, kurangi tenor, di bulan 1
-  scenarios.push({
-    name: `1x di Bln ${bln1} — Kurangi Tenor`,
-    events: [{bulan:bln1, amount:budget, option:'reduce-tenor', penalti:penaltiPct}],
-    tag: '1x Sekaligus',
-  });
-  // Skenario 2: 1x sekaligus, kurangi cicilan, di bulan 1
-  scenarios.push({
-    name: `1x di Bln ${bln1} — Kurangi Cicilan`,
-    events: [{bulan:bln1, amount:budget, option:'reduce-cicilan', penalti:penaltiPct}],
-    tag: '1x Sekaligus',
-  });
-  // Skenario 3: 2x bertahap, kedua kurangi tenor
-  scenarios.push({
-    name: `2x Bertahap (${splitLabel}) — Keduanya Kurangi Tenor`,
-    events: [
-      {bulan:bln1, amount:amt1, option:'reduce-tenor', penalti:penaltiPct},
-      {bulan:bln2, amount:amt2, option:'reduce-tenor', penalti:penaltiPct},
-    ],
-    tag: `2x Bertahap (${splitLabel})`,
-  });
-  // Skenario 4: 2x bertahap, kedua kurangi cicilan
-  scenarios.push({
-    name: `2x Bertahap (${splitLabel}) — Keduanya Kurangi Cicilan`,
-    events: [
-      {bulan:bln1, amount:amt1, option:'reduce-cicilan', penalti:penaltiPct},
-      {bulan:bln2, amount:amt2, option:'reduce-cicilan', penalti:penaltiPct},
-    ],
-    tag: `2x Bertahap (${splitLabel})`,
-  });
-  // Skenario 5: 2x bertahap, pertama kurangi tenor, kedua kurangi cicilan
-  scenarios.push({
-    name: `2x Bertahap (${splitLabel}) — Tenor lalu Cicilan`,
-    events: [
-      {bulan:bln1, amount:amt1, option:'reduce-tenor', penalti:penaltiPct},
-      {bulan:bln2, amount:amt2, option:'reduce-cicilan', penalti:penaltiPct},
-    ],
-    tag: `2x Bertahap (${splitLabel})`,
-  });
-  // Skenario 6: 2x bertahap, pertama kurangi cicilan, kedua kurangi tenor
-  scenarios.push({
-    name: `2x Bertahap (${splitLabel}) — Cicilan lalu Tenor`,
-    events: [
-      {bulan:bln1, amount:amt1, option:'reduce-cicilan', penalti:penaltiPct},
-      {bulan:bln2, amount:amt2, option:'reduce-tenor', penalti:penaltiPct},
-    ],
-    tag: `2x Bertahap (${splitLabel})`,
-  });
-
-  // Calculate each scenario
   const results = scenarios.map(sc => {
     const res = applyPelunasan([...baseSchedule], sc.events);
     return {
       ...sc,
-      totalBunga: res.totalBunga,
-      totalBungaHemat: res.totalBungaHemat,
-      totalPenalti: res.totalPenalti,
-      netHemat: res.netHemat,
-      tenorEfektif: res.tenorEfektif,
-      totalTenorHemat: res.totalTenorHemat,
-      efisiensi: res.netHemat / budget * 100,
+      totalBunga:     res.totalBunga,
+      totalBungaHemat:res.totalBungaHemat,
+      totalPenalti:   res.totalPenalti,
+      netHemat:       res.netHemat,
+      tenorEfektif:   res.tenorEfektif,
+      totalTenorHemat:res.totalTenorHemat,
+      efisiensi:      res.netHemat / budget * 100,
     };
   });
+  results.sort((a, b) => b.netHemat - a.netHemat);
 
-  // Rank by netHemat descending
-  results.sort((a,b) => b.netHemat - a.netHemat);
-
-  // Render winner banner
   const winner = results[0];
-  const winnerSection = $('optim-winner-section');
-  winnerSection.innerHTML = `
+  $('optim-winner-section').innerHTML = `
     <div class="optim-winner-banner" style="margin-bottom:14px;">
       <div class="optim-winner-label">🏆 Strategi Terbaik</div>
       <div class="optim-winner-title">${winner.name}</div>
@@ -806,16 +886,12 @@ function jalankanOptimasi() {
       <div class="optim-winner-saving">${fmt(Math.max(winner.netHemat,0))} dihemat</div>
     </div>`;
 
-  // Render scenario cards
   const rankClasses = ['r1','r2','r3','r4','r4','r4'];
-  const rankEmojis = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣'];
-  const scenList = $('optim-scenario-list');
-  scenList.innerHTML = '';
+  const rankEmojis  = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣'];
+  const scenList = $('optim-scenario-list'); scenList.innerHTML = '';
   results.forEach((sc, i) => {
-    const isBest = i===0;
-    const isWorst = i===results.length-1;
     const div = document.createElement('div');
-    div.className = 'optim-scenario' + (isBest?' best':'') + (isWorst&&!isBest?' worst':'');
+    div.className = 'optim-scenario' + (i===0?' best':'') + (i===results.length-1&&i>0?' worst':'');
     div.innerHTML = `
       <div class="optim-scenario-hdr">
         <div class="optim-scenario-name">
@@ -835,11 +911,8 @@ function jalankanOptimasi() {
     scenList.appendChild(div);
   });
 
-  // Comparison table
-  const wrap = $('optim-comparison-wrap');
-  wrap.style.display='block';
-  const tbl = $('optim-cmp-table');
-  tbl.innerHTML = `
+  const wrap = $('optim-comparison-wrap'); wrap.style.display = 'block';
+  $('optim-cmp-table').innerHTML = `
     <thead><tr>
       <th>Strategi</th><th>Bunga Dihemat</th><th>Penalti</th><th>Net Hemat</th><th>Tenor Hemat</th>
     </tr></thead>
@@ -856,85 +929,64 @@ function jalankanOptimasi() {
 
   const optRes = $('optim-results');
   optRes.classList.add('show');
-  setTimeout(()=>optRes.scrollIntoView({behavior:'smooth',block:'start'}),100);
+  setTimeout(() => optRes.scrollIntoView({behavior:'smooth', block:'start'}), 100);
 }
 
 /* ── HITUNG ── */
 function hitung() {
-  const harga = rawVal('s-harga');
-  const dp = rawVal('s-dp');
-  const tenor = parseInt($('s-tenor').value)||0;
-  const pokok = harga - dp;
-  const totalBulan = tenor*12;
+  const harga  = rawVal('s-harga');
+  const dp     = rawVal('s-dp');
+  const tenor  = parseInt($('s-tenor').value) || 0;
+  const pokok  = harga - dp;
+  const totalBulan = tenor * 12;
 
-  const {schedule: baseSchedule, cicilanAwal, periodSummary} = buildBaseSchedule(pokok, totalBulan);
-  let schedule = [...baseSchedule];
+  const { schedule: baseSchedule, cicilanAwal, periodSummary } = buildBaseSchedule(pokok, totalBulan);
 
+  // Sync UI values back into pelEvents before calculating
   pelEvents.forEach(ev => {
-    ev.bulan = parseInt($(`pb-${ev.id}`)?.value)||ev.bulan;
-    ev.amount = rawVal(`pa-${ev.id}`);
-    ev.penalti = parseFloat($(`pp-${ev.id}`)?.value)||ev.penalti;
-    ev.option = $(`po-${ev.id}`)?.value||ev.option;
+    ev.bulan   = parseInt($(`pb-${ev.id}`)?.value)   || ev.bulan;
+    ev.amount  = rawVal(`pa-${ev.id}`);
+    ev.penalti = parseFloat($(`pp-${ev.id}`)?.value) || ev.penalti;
+    ev.option  = $(`po-${ev.id}`)?.value             || ev.option;
   });
 
-  const events = pelOn ? [...pelEvents].sort((a,b)=>a.bulan-b.bulan) : [];
-  const savingsList=[];
+  let schedule = [...baseSchedule];
+  const savingsList = [];
 
-  for (const ev of events) {
-    const idx = schedule.findIndex(r=>r.bln===ev.bulan);
-    if (idx<0 || idx>=schedule.length-1) continue;
-    const pre = schedule.slice(0, idx+1);
-    const sisaBefore = pre[pre.length-1].sisa;
-    const sisaAfter = sisaBefore - ev.amount;
-    if (sisaAfter<=0) continue;
-    const penaltiAmt = ev.amount * ev.penalti/100;
-    const bungaTanpa = schedule.slice(idx+1).reduce((a,r)=>a+r.bunga,0);
-    const row = pre[pre.length-1];
-    const r2 = row.bunga / (row.sisa + row.pkok);
-    let newRows=[];
-    if (ev.option==='reduce-tenor') {
-      const c=row.cicilan; let s2=sisaAfter, m2=ev.bulan+1;
-      while (s2>0.01 && m2<=ev.bulan+600) {
-        const b2=s2*r2, p2=Math.min(c-b2,s2);
-        s2=Math.max(s2-p2,0);
-        newRows.push({bln:m2,cicilan:c,pkok:p2,bunga:b2,sisa:s2}); m2++;
-      }
-    } else {
-      const rem=schedule.length-idx-1, nc=anuitas(sisaAfter,r2,rem);
-      let s2=sisaAfter, m2=ev.bulan+1;
-      for (let k=0;k<rem&&s2>0.01;k++,m2++) {
-        const b2=s2*r2, p2=Math.min(nc-b2,s2);
-        s2=Math.max(s2-p2,0);
-        newRows.push({bln:m2,cicilan:nc,pkok:p2,bunga:b2,sisa:s2});
-      }
+  if (pelOn) {
+    const sortedEvents = [...pelEvents].sort((a, b) => a.bulan - b.bulan);
+    for (const ev of sortedEvents) {
+      const result = applyPelunasanToSchedule(schedule, ev);
+      if (!result) continue;
+      schedule = result.schedule;
+      savingsList.push({
+        label:      `Pelunasan Bln ke-${ev.bulan}`,
+        amount:     ev.amount,
+        penaltiAmt: result.penaltiAmt,
+        bungaHemat: result.bungaHemat,
+        tenorHemat: result.tenorHemat,
+        netHemat:   result.netHemat,
+        cicilanBaru:result.cicilanBaru,
+        sisaAfter:  result.sisaAfter,
+        blnSetelah: result.blnSetelah,
+        blnAkhir:   result.blnAkhir,
+        option:     ev.option,
+      });
     }
-    const bungaDengan = newRows.reduce((a,r)=>a+r.bunga,0);
-    const bungaHemat = bungaTanpa - bungaDengan;
-    const tenorHemat = schedule.length - (pre.length+newRows.length);
-    const cicilanBaru = newRows.length>0 ? newRows[0].cicilan : 0;
-    const blnSetelah = ev.bulan+1;
-    const blnAkhir = newRows.length>0 ? newRows[newRows.length-1].bln : ev.bulan;
-    pre[pre.length-1] = {...pre[pre.length-1], isPelRow:true};
-    schedule = [...pre, ...newRows];
-    savingsList.push({
-      label:`Pelunasan Bln ke-${ev.bulan}`, amount:ev.amount,
-      penaltiAmt, bungaHemat, tenorHemat, netHemat:bungaHemat-penaltiAmt,
-      cicilanBaru, sisaAfter, blnSetelah, blnAkhir,
-      option: ev.option,
-    });
   }
 
-  const totalCicilan = schedule.reduce((a,r)=>a+r.cicilan,0);
-  const totalBunga = schedule.reduce((a,r)=>a+r.bunga,0);
-  const tenorEfektif = schedule.length;
+  const totalCicilan  = schedule.reduce((a, r) => a + r.cicilan, 0);
+  const totalBunga    = schedule.reduce((a, r) => a + r.bunga,   0);
+  const tenorEfektif  = schedule.length;
 
-  $('res-total').textContent = fmt(totalCicilan);
-  $('res-sub').textContent = `dalam ${tenorEfektif} bulan (${(tenorEfektif/12).toFixed(1)} tahun)`;
-  $('res-pokok').textContent = fmtS(pokok);
-  $('res-bunga').textContent = fmtS(totalBunga);
-  $('res-cicilan').textContent= fmtS(cicilanAwal)+'/bln';
-  $('res-tenor').textContent = `${tenorEfektif} bln`;
+  $('res-total').textContent  = fmt(totalCicilan);
+  $('res-sub').textContent    = `dalam ${tenorEfektif} bulan (${(tenorEfektif/12).toFixed(1)} tahun)`;
+  $('res-pokok').textContent  = fmtS(pokok);
+  $('res-bunga').textContent  = fmtS(totalBunga);
+  $('res-cicilan').textContent= fmtS(cicilanAwal) + '/bln';
+  $('res-tenor').textContent  = `${tenorEfektif} bln`;
 
+  /* Period summary (original, unmodified periods) */
   const psb = $('period-summary-box');
   psb.innerHTML = '<div class="psb-header">📶 Cicilan Per Periode</div>';
   periodSummary.forEach(p => {
@@ -951,10 +1003,11 @@ function hitung() {
       <div class="period-cicilan">${fmt(p.cicilan)}<span>/bln</span></div>`;
     psb.appendChild(row);
   });
-  psb.style.display='block';
+  psb.style.display = 'block';
 
+  /* After-prepayment cicilan summary */
   const apb = $('after-pel-box');
-  if (pelOn && savingsList.length>0) {
+  if (pelOn && savingsList.length > 0) {
     apb.innerHTML = '<div class="psb-header">💰 Cicilan Per Periode Setelah Pelunasan</div>';
     const firstPelBln = savingsList[0].blnSetelah - 1;
     const addRow = (badge, badgeClass, label, meta, cicilan, highlight) => {
@@ -971,21 +1024,24 @@ function hitung() {
         <div class="period-cicilan">${fmt(cicilan)}<span>/bln</span></div>`;
       apb.appendChild(row);
     };
-    addRow('AWAL','','Sebelum Pelunasan',`Bln 1–${firstPelBln} · Cicilan bertingkat per periode`,cicilanAwal,false);
-    savingsList.forEach((s,i) => {
-      const opsiLabel = s.option==='reduce-tenor' ? 'Kurangi Tenor' : 'Kurangi Cicilan';
-      const meta = `Bln ${s.blnSetelah}–${s.blnAkhir} · Pokok berkurang ${fmtS(s.amount)} · ${opsiLabel}`;
-      addRow(`#${i+1}`,'float',`Setelah ${s.label}`,meta,s.cicilanBaru,true);
+    addRow('AWAL', '', 'Sebelum Pelunasan',
+      `Bln 1–${firstPelBln} · Cicilan bertingkat per periode`, cicilanAwal, false);
+    savingsList.forEach((s, i) => {
+      const opsiLabel = s.option === 'reduce-tenor' ? 'Kurangi Tenor' : 'Kurangi Cicilan';
+      addRow(`#${i+1}`, 'float', `Setelah ${s.label}`,
+        `Bln ${s.blnSetelah}–${s.blnAkhir} · Pokok berkurang ${fmtS(s.amount)} · ${opsiLabel}`,
+        s.cicilanBaru, true);
     });
-    apb.style.display='block';
+    apb.style.display = 'block';
   } else {
-    apb.style.display='none';
+    apb.style.display = 'none';
   }
 
-  const sc = $('savings-container'); sc.innerHTML='';
+  /* Savings banners */
+  const sc = $('savings-container'); sc.innerHTML = '';
   savingsList.forEach(s => {
-    const d=document.createElement('div'); d.className='savings-banner';
-    d.innerHTML=`
+    const d = document.createElement('div'); d.className = 'savings-banner';
+    d.innerHTML = `
       <div class="savings-banner-title">💰 ${s.label} — ${fmtS(s.amount)}</div>
       <div class="savings-row"><span class="lbl">Penalti dibayar</span><span class="val neg">${fmt(s.penaltiAmt)}</span></div>
       <div class="savings-row"><span class="lbl">Bunga dihemat</span><span class="val pos">${fmt(Math.max(s.bungaHemat,0))}</span></div>
@@ -996,15 +1052,14 @@ function hitung() {
       </div>`;
     sc.appendChild(d);
   });
-
-  if (savingsList.length>1) {
+  if (savingsList.length > 1) {
     const totPenalti = savingsList.reduce((a,s)=>a+s.penaltiAmt,0);
-    const totBunga = savingsList.reduce((a,s)=>a+s.bungaHemat,0);
-    const totTenor = savingsList.reduce((a,s)=>a+s.tenorHemat,0);
-    const totNet = savingsList.reduce((a,s)=>a+s.netHemat,0);
-    const d=document.createElement('div'); d.className='savings-banner';
-    d.style.cssText='border-color:var(--green-light);background:var(--green-pale)';
-    d.innerHTML=`
+    const totBunga   = savingsList.reduce((a,s)=>a+s.bungaHemat,0);
+    const totTenor   = savingsList.reduce((a,s)=>a+s.tenorHemat,0);
+    const totNet     = savingsList.reduce((a,s)=>a+s.netHemat,0);
+    const d = document.createElement('div'); d.className = 'savings-banner';
+    d.style.cssText = 'border-color:var(--green-light);background:var(--green-pale)';
+    d.innerHTML = `
       <div class="savings-banner-title" style="color:var(--green-deep)">🎉 Total ${savingsList.length} Event Pelunasan</div>
       <div class="savings-row"><span class="lbl">Total penalti</span><span class="val neg">${fmt(totPenalti)}</span></div>
       <div class="savings-row"><span class="lbl">Total bunga dihemat</span><span class="val pos">${fmt(Math.max(totBunga,0))}</span></div>
@@ -1016,41 +1071,45 @@ function hitung() {
     sc.appendChild(d);
   }
 
-  const tbody=$('schedule-body'); tbody.innerHTML='';
-  $('sch-count').textContent=`${schedule.length} bulan`;
-  let lastP=-1;
-  schedule.forEach((r,i) => {
-    if (r.pIdx!==undefined && r.pIdx!==lastP) {
-      lastP=r.pIdx;
-      const ps=periodSummary[r.pIdx];
+  /* Schedule table */
+  const tbody = $('schedule-body'); tbody.innerHTML = '';
+  $('sch-count').textContent = `${schedule.length} bulan`;
+  let lastPIdx = -1;
+  schedule.forEach((r, i) => {
+    // Period separator — only for rows that still carry pIdx (original or propagated)
+    if (r.pIdx !== undefined && r.pIdx !== lastPIdx) {
+      lastPIdx = r.pIdx;
+      const ps = periodSummary[r.pIdx];
       if (ps) {
-        const sep=document.createElement('tr'); sep.className='period-sep';
-        sep.innerHTML=`<td colspan="5">📶 ${ps.label} — ${ps.rate}%/thn — ${fmt(ps.cicilan)}/bln</td>`;
+        const sep = document.createElement('tr'); sep.className = 'period-sep';
+        sep.innerHTML = `<td colspan="5">📶 ${ps.label} — ${ps.rate}%/thn — ${fmt(ps.cicilan)}/bln</td>`;
         tbody.appendChild(sep);
       }
     }
-    const tr=document.createElement('tr');
+    const tr = document.createElement('tr');
     if (r.isPelRow) tr.classList.add('pel-row');
-    if (i===schedule.length-1) tr.classList.add('last-row');
-    tr.innerHTML=`
+    if (i === schedule.length - 1) tr.classList.add('last-row');
+    tr.innerHTML = `
       <td>${r.bln}${r.isPelRow?' 💰':''}</td>
-      <td>${fmtS(r.cicilan)}</td><td>${fmtS(r.pkok)}</td>
-      <td>${fmtS(r.bunga)}</td><td>${fmtS(r.sisa)}</td>`;
+      <td>${fmtS(r.cicilan)}</td>
+      <td>${fmtS(r.pkok)}</td>
+      <td>${fmtS(r.bunga)}</td>
+      <td>${fmtS(r.sisa)}</td>`;
     tbody.appendChild(tr);
   });
 
   $('results-section').classList.add('show');
-  setTimeout(()=>$('results-section').scrollIntoView({behavior:'smooth',block:'start'}),100);
+  setTimeout(() => $('results-section').scrollIntoView({behavior:'smooth', block:'start'}), 100);
 }
 
 /* ── INIT ── */
-window.addEventListener('DOMContentLoaded', ()=>{
-  setCur('s-harga',1000000000);
-  setCur('s-dp',200000000);
+window.addEventListener('DOMContentLoaded', () => {
+  setCur('s-harga', 1000000000);
+  setCur('s-dp',    200000000);
   renderSteps();
 });
 
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
 </html>
