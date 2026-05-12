@@ -145,7 +145,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
 .schedule-table tr.last-row td { border-bottom:none; font-weight:800; background:var(--green-pale); }
 .schedule-table tr.period-sep td { background:var(--green-deep); color:var(--white); font-size:11px; font-weight:700; padding:7px 12px; text-align:left; }
 
-/* OPTIMASI FEATURE STYLES */
+/* ── OPTIMASI ── */
 .optim-card { background: linear-gradient(135deg, #0B3D2E 0%, #1565C0 100%); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: 0 6px 32px rgba(11,61,46,0.22); color: var(--white); }
 .optim-card-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:0; }
 .optim-card-title { font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:8px; color: rgba(255,255,255,0.85); }
@@ -172,7 +172,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
 .optim-run-btn { width:100%; background:var(--gold); color:#3D2E00; border:none; border-radius:var(--radius-sm); padding:14px; font-size:14px; font-weight:800; font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer; margin-top:4px; transition:transform 0.1s, box-shadow 0.1s; box-shadow: 0 4px 16px rgba(245,200,66,0.4); }
 .optim-run-btn:active { transform:scale(0.97); }
 .optim-run-btn:hover { box-shadow: 0 6px 24px rgba(245,200,66,0.6); }
-
 .optim-results { display:none; }
 .optim-results.show { display:block; animation:slideUp 0.4s ease; }
 .optim-winner-banner { background:linear-gradient(135deg, var(--gold) 0%, #E6A800 100%); border-radius:var(--radius); padding:20px; margin-bottom:14px; box-shadow: 0 4px 20px rgba(245,200,66,0.4); }
@@ -180,7 +179,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
 .optim-winner-title { font-family:'DM Serif Display',serif; font-size:22px; color:#3D2E00; margin-bottom:6px; line-height:1.3; }
 .optim-winner-sub { font-size:13px; color:#5A3E00; font-weight:600; }
 .optim-winner-saving { font-family:'DM Serif Display',serif; font-size:28px; color:#0B3D2E; margin-top:8px; }
-
 .optim-scenario-grid { display:flex; flex-direction:column; gap:12px; margin-bottom:14px; }
 .optim-scenario { background:var(--white); border-radius:var(--radius-sm); padding:16px; border:2px solid var(--ink-20); box-shadow:var(--shadow); transition: border-color 0.2s; }
 .optim-scenario.best { border-color: var(--gold); background: linear-gradient(135deg, #FFFDF0 0%, var(--white) 100%); }
@@ -205,7 +203,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
 .optim-scenario.best .optim-net-saving { background: linear-gradient(90deg,var(--gold-light),#FFFDF0); }
 .optim-scenario.best .optim-net-saving .lbl { color:#5A3E00; }
 .optim-scenario.best .optim-net-saving .val { color:#7A5C00; }
-
 .comparison-table-card { background:var(--white); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); margin-bottom:14px; }
 .comparison-table-card .psb-header { background:linear-gradient(90deg,#0B3D2E,#1565C0); }
 .cmp-table { width:100%; border-collapse:collapse; font-size:12px; }
@@ -218,6 +215,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
 .cmp-table .diff-pos { color:var(--green-mid); font-weight:700; }
 .cmp-table .diff-neg { color:var(--red-warn); font-weight:700; }
 
+/* bottom nav */
 .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:var(--white); border-top:1px solid var(--ink-20); display:flex; z-index:200; }
 .bottom-nav-btn { flex:1; padding:12px 8px 16px; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10.5px; font-weight:700; color:var(--ink-60); background:none; border:none; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; }
 .bottom-nav-btn.active { color:var(--green-mid); }
@@ -268,7 +266,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
         <label>Uang Muka (DP) — <span id="s-dp-pct">20</span>%</label>
         <div class="input-wrap">
           <span class="input-prefix">Rp</span>
-          <input type="text" inputmode="numeric" id="s-dp" class="has-prefix"
+          <input type="text" inputmode="numeric" id="s-dp" class="has-prefix" placeholder="200.000.000"
             oninput="onCurrencyInput(this, syncDPFromInput)" />
         </div>
         <div class="slider-wrap">
@@ -407,7 +405,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
         </div>
         <div class="schedule-table-wrap">
           <table class="schedule-table">
-            <thead><tr><th>Bln</th><th>Cicilan</th><th>Pokok</th><th>Bunga</th><th>Sisa</th></tr></thead>
+            <thead><tr><th>Bln</th><th>Rate</th><th>Cicilan</th><th>Pokok</th><th>Bunga</th><th>Sisa</th></tr></thead>
             <tbody id="schedule-body"></tbody>
           </table>
         </div>
@@ -515,20 +513,17 @@ function showPage(p) {
 
 /* ── DP ── */
 function syncDP() {
-  const h = rawVal('s-harga'), pct = +$('s-dp-slider').value||0;
-  const dpAmt = Math.round(h*pct/100);
-  setCur('s-dp', dpAmt);
-  $('s-dp-pct').textContent = pct;
-  const dpEl = $('s-dp');
-  if (dpEl) dpEl.placeholder = pct === 0 ? '0' : dpAmt.toLocaleString('id-ID');
+  const h = rawVal('s-harga'), pct = +$('s-dp-slider').value||20;
+  setCur('s-dp', Math.round(h*pct/100)); $('s-dp-pct').textContent = pct;
 }
 function syncDPFromInput() {
   const h = rawVal('s-harga')||1, dp = rawVal('s-dp');
-  const pct = Math.min(Math.max(Math.round(dp/h*100),0),50);
+  const pct = Math.min(Math.max(Math.round(dp/h*100),5),50);
   $('s-dp-slider').value = pct; $('s-dp-pct').textContent = pct;
 }
 function syncDPFromSlider() {
-  syncDP(); // reuse syncDP which handles value + placeholder + label
+  const h = rawVal('s-harga'), pct = +$('s-dp-slider').value||20;
+  setCur('s-dp', Math.round(h*pct/100)); $('s-dp-pct').textContent = pct;
 }
 
 /* ── STEP TABLE ── */
@@ -625,419 +620,321 @@ function toggleOptim() {
   $('optim-body').classList.toggle('hidden', !optimOn);
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   EVENT-DRIVEN LOAN ENGINE  (refactored per TypeScript spec)
-   ───────────────────────────────────────────────────────────────────
-   Single source of truth: calculateDynamicLoan()
-   Walks month-by-month and reacts to every LoanEvent exactly when
-   it occurs — no "build base then patch" post-processing.
-
-   LoanEvent:
-     { month, type:'RATE_CHANGE'|'EXTRA_PAYMENT',
-       value, option?:'reduce-tenor'|'reduce-cicilan', penalti? }
-
-   AmortizationRow (internal / schedule array):
-     { bln, cicilan, pkok, bunga, sisa, monthlyRate, pIdx, isPelRow? }
-
-   Public surface used by the UI:
-     buildBaseSchedule(pokok, totalBulan)     → { schedule, cicilanAwal, periodSummary }
-     runWithPelunasan(pokok, totalBulan, evs) → { schedule, cicilanAwal, periodSummary,
-                                                   savingsList, baseBunga }
-     applyPelunasan(baseSchedule, evList)     → aggregate stats  [Optimasi feature]
-   ═══════════════════════════════════════════════════════════════════ */
-
-/* ── anuitas formula ── */
+/* ── ANUITAS FORMULA ── */
 function anuitas(P, r, n) {
   if (r === 0) return P / n;
   return P * r * Math.pow(1+r, n) / (Math.pow(1+r, n) - 1);
 }
 
-/* ── map step table → pIdx & rate for any absolute month ── */
-function getStepInfoForMonth(bln) {
-  let cursor = 0;
-  for (let i = 0; i < steps.length; i++) {
-    const dur  = steps[i].dur * 12;
-    const end  = cursor + dur;
-    if (bln >= cursor + 1 && bln <= end) {
-      return { pIdx: i, r: steps[i].rate / 100 / 12, stepEnd: end };
-    }
-    cursor = end;
-  }
-  // beyond last defined step — clamp to last
-  const last = steps[steps.length - 1];
-  return { pIdx: steps.length - 1, r: last.rate / 100 / 12, stepEnd: Infinity };
-}
-
 /*
- * calculateDynamicLoan
- * ────────────────────
- * Port of the TypeScript spec with full KPR extensions:
+ * ── CORE ENGINE ──────────────────────────────────────────────────────────────
  *
- *  · Walks month 1…totalTenorMonths.
- *  · Before each month's arithmetic, checks if any event fires.
- *    RATE_CHANGE  → update currentRate; re-amortise over remaining months.
- *    EXTRA_PAYMENT→ reduce balance; then:
- *        'reduce-tenor'   → keep currentInstallment (balance shrinks faster)
- *        'reduce-cicilan' → re-amortise so tenor stays the same
- *  · pIdx is re-resolved each month from the steps table, so rate-step
- *    boundaries work correctly even after multiple prepayments.
+ * buildBaseSchedule:
+ *   Returns an array of monthly rows. Each row carries:
+ *     { bln, cicilan, pkok, bunga, sisa, stepIdx, stepRate }
+ *   stepIdx & stepRate are carried so we never need to infer the rate later.
  *
- * Returns { schedule, cicilanAwal, periodSummary, savingsList, baseBunga }
- *   savingsList is populated only when pelEvents are passed.
- *   baseBunga   = total interest with NO events (for savings comparison).
+ * applyOnePelunasan:
+ *   Given a schedule (possibly already modified by previous pelunasan events)
+ *   and one pelunasan event, returns a NEW schedule plus savings metrics.
+ *   Key fixes vs. original:
+ *   1. Rate is taken from row.stepRate — never reverse-engineered.
+ *   2. "Reduce tenor": keep cicilan, recalculate until balance clears.
+ *   3. "Reduce cicilan": keep REMAINING MONTHS (from the CURRENT schedule),
+ *      recalculate cicilan on lower principal — tenor stays the same.
+ *   4. All new rows carry stepIdx & stepRate forward from the pelunasan row,
+ *      so period-separator logic keeps working after multiple events.
+ * ─────────────────────────────────────────────────────────────────────────────
  */
-function calculateDynamicLoan(principal, totalTenorMonths, loanEvents) {
-  // ── pre-sort events by month ──
-  const events = [...loanEvents].sort((a, b) => a.month - b.month || a.type.localeCompare(b.type));
-
-  // ── state ──
-  let balance            = principal;
-  let { r: initRate, pIdx: initPIdx } = getStepInfoForMonth(1);
-  let currentRate        = initRate;
-  let remainingMonths    = totalTenorMonths;
-  let currentInstallment = anuitas(balance, currentRate, remainingMonths);
-
-  const schedule      = [];
+function buildBaseSchedule(pokok, totalBulan) {
+  const schedule = [];
+  let sisa = pokok;
+  let bln = 0;
+  let cicilanAwal = 0;
   const periodSummary = [];
 
-  // track period summary
-  let lastPIdx       = -1;
-  let periodBlnStart = 1;
-  let periodSisaAwal = principal;
+  for (let i = 0; i < steps.length && sisa > 0.01 && bln < totalBulan; i++) {
+    const s = steps[i];
+    const r = s.rate / 100 / 12;
+    const remainBulan = totalBulan - bln;           // sisa bulan untuk anuitas
+    const durBulan = Math.min(s.dur * 12, remainBulan);
+    if (durBulan <= 0) break;
 
-  // savings tracking per extra-payment event
-  // We pre-compute a "no-event" interest total for each future month below.
-  // Instead, we track cumulative interest BEFORE vs AFTER each payment.
-  // We'll compute baseBunga via a separate clean run.
+    // Cicilan dihitung terhadap SISA TENOR KESELURUHAN (remainBulan), bukan hanya durasi periode ini
+    const cicilan = anuitas(sisa, r, remainBulan);
+    if (i === 0) cicilanAwal = cicilan;
 
-  let cicilanAwal = currentInstallment;
-  // installmentFrozen: true when a reduce-tenor payment has occurred.
-  // While frozen, RATE_CHANGE events update the rate but do NOT recalculate
-  // the installment — so the balance drains faster and tenor shortens.
-  // A subsequent reduce-cicilan payment unfreezes it.
-  let installmentFrozen = false;
+    const sisaAwal = sisa;
+    const blnStart = bln + 1;
 
-  for (let month = 1; month <= totalTenorMonths; month++) {
-    // ── Step 1: fire events for this month ──
-    const monthEvents = events.filter(e => e.month === month);
-
-    for (const ev of monthEvents) {
-      if (ev.type === 'RATE_CHANGE') {
-        currentRate = ev.value / 100 / 12;
-        // Only re-amortise when installment is NOT frozen by a reduce-tenor payment.
-        // If frozen: rate changes but installment stays → principal paid per month
-        // increases when rate drops, decreases when rate rises, and balance drains
-        // at whatever pace it can → tenor shortens as intended.
-        if (!installmentFrozen) {
-          const rem = totalTenorMonths - month + 1;
-          if (balance > 0.01 && rem > 0) {
-            currentInstallment = anuitas(balance, currentRate, rem);
-          }
-        }
-      }
-
-      if (ev.type === 'EXTRA_PAYMENT') {
-        const penaltiAmt = ev.value * (ev.penalti || 0) / 100;
-        balance = Math.max(balance - ev.value, 0);
-
-        if (balance > 0.01) {
-          // rem = months remaining AFTER the current month closes.
-          // The payment fires before this month's interest is charged, but
-          // month M will close in the same loop iteration, so the new
-          // installment covers months M through end = (T - month + 1) rows.
-          // Using T - month + 1 here is correct: month M uses the new
-          // installment for its own principal/interest split this iteration,
-          // then months M+1..T continue with it.
-          const rem = totalTenorMonths - month + 1;
-          if (ev.option === 'reduce-cicilan') {
-            // recalculate installment; tenor stays same
-            installmentFrozen  = false;  // unfreeze: installment adjusts with future rates
-            currentInstallment = anuitas(balance, currentRate, rem);
-          } else {
-            // reduce-tenor: lock installment; balance drains faster; tenor shortens
-            installmentFrozen  = true;
-          }
-
-
-        }
-
-        // mark this month row as a prepayment row (for UI highlight)
-        // we store a flag that the current month row should be marked
-        ev._markRow = true;
-      }
+    for (let m = 0; m < durBulan && sisa > 0.01; m++) {
+      bln++;
+      const bunga = sisa * r;
+      const pkok = Math.min(cicilan - bunga, sisa);
+      sisa = Math.max(sisa - pkok, 0);
+      schedule.push({ bln, cicilan, pkok, bunga, sisa, stepIdx: i, stepRate: r });
     }
 
-    // ── Step 2: month arithmetic ──
-    const { pIdx } = getStepInfoForMonth(month);
-    const interest   = balance * currentRate;
-    // Negative amortization guard: if the frozen installment is less than
-    // the interest due (can happen when a small reduce-tenor payment precedes
-    // a high floating rate), clamp principal to 0 and carry the interest.
-    // The loan will never pay off in this case; the loop exits at totalTenorMonths.
-    const principal_ = Math.max(Math.min(currentInstallment - interest, balance), 0);
-    balance = Math.max(balance - principal_, 0);
-
-    // detect if any EXTRA_PAYMENT fired this month (for isPelRow flag)
-    const hasPel = monthEvents.some(e => e.type === 'EXTRA_PAYMENT' && e._markRow);
-
-    schedule.push({
-      bln:        month,
-      cicilan:    currentInstallment,
-      pkok:       principal_,
-      bunga:      interest,
-      sisa:       balance,
-      monthlyRate: currentRate,
-      pIdx,
-      isPelRow:   hasPel || undefined,
+    const y0 = steps.slice(0, i).reduce((a, s) => a + s.dur, 0) + 1;
+    periodSummary.push({
+      label: `Periode ${i+1} (Thn ${y0}–${y0 + s.dur - 1})`,
+      isFloat: i > 0,
+      rate: s.rate,
+      cicilan,
+      blnStart,
+      blnEnd: bln,
+      sisaAwal,
     });
-
-    // ── Step 3: period summary tracking ──
-    if (pIdx !== lastPIdx) {
-      if (lastPIdx >= 0) {
-        // close previous period
-        const s = steps[lastPIdx];
-        const y0 = steps.slice(0, lastPIdx).reduce((a, ss) => a + ss.dur, 0) + 1;
-        periodSummary.push({
-          label:    `Periode ${lastPIdx+1} (Thn ${y0}–${y0+s.dur-1})`,
-          isFloat:  lastPIdx > 0,
-          rate:     s.rate,
-          cicilan:  schedule[periodBlnStart - 1].cicilan,
-          blnStart: periodBlnStart,
-          blnEnd:   month - 1,
-          sisaAwal: periodSisaAwal,
-        });
-      }
-      lastPIdx       = pIdx;
-      periodBlnStart = month;
-      // sisaAwal = balance BEFORE this month's principal deduction.
-      // After the arithmetic step: balance = pre - principal_
-      // So pre = balance + principal_ — correct reconstruction.
-      periodSisaAwal = balance + principal_;
-    }
-
-    if (balance <= 0.01) {
-      // close final period
-      const s = steps[pIdx] || steps[steps.length - 1];
-      const y0 = steps.slice(0, pIdx).reduce((a, ss) => a + ss.dur, 0) + 1;
-      periodSummary.push({
-        label:    `Periode ${pIdx+1} (Thn ${y0}–${y0+s.dur-1})`,
-        isFloat:  pIdx > 0,
-        rate:     s.rate,
-        cicilan:  schedule[periodBlnStart - 1].cicilan,
-        blnStart: periodBlnStart,
-        blnEnd:   month,
-        sisaAwal: periodSisaAwal,
-      });
-      break; // lunas lebih cepat
-    }
   }
 
   return { schedule, cicilanAwal, periodSummary };
 }
 
 /*
- * buildRateChangeEvents
- * ─────────────────────
- * Converts the `steps` table into RATE_CHANGE LoanEvents so that
- * calculateDynamicLoan picks up each rate transition automatically.
- * Period 1 starts at month 1 (handled by initial rate), so we only
- * emit events for period boundaries starting at period 2.
+ * Apply ONE pelunasan event to a schedule.
+ * Returns { schedule, bungaHemat, penaltiAmt, tenorHemat, cicilanBaru, sisaAfter }
+ *
+ * After pelunasan, the new rows MUST walk through the original step boundaries
+ * so each period gets the correct interest rate. We do this by:
+ *   1. Building a stepBoundary map: for each month number → { stepIdx, stepRate }
+ *      from the base schedule (which always has the full step info).
+ *   2. After pelunasan month, we iterate month-by-month, looking up which step
+ *      that month belongs to. When stepIdx changes, we recalculate the cicilan
+ *      (anuitas) against the new rate and remaining months — exactly how a bank
+ *      recalculates at each rate-change boundary.
  */
-function buildRateChangeEvents() {
-  const evs = [];
-  let cursor = 0;
-  for (let i = 0; i < steps.length; i++) {
-    cursor += steps[i].dur * 12;
-    if (i < steps.length - 1) {
-      evs.push({ month: cursor + 1, type: 'RATE_CHANGE', value: steps[i+1].rate });
+function applyOnePelunasan(schedule, ev) {
+  const idx = schedule.findIndex(r => r.bln === ev.bulan);
+  if (idx < 0 || idx >= schedule.length - 1) {
+    return { schedule, bungaHemat: 0, penaltiAmt: 0, tenorHemat: 0, cicilanBaru: 0, sisaAfter: 0, skipped: true };
+  }
+
+  const pre = schedule.slice(0, idx + 1);
+  const pelRow = pre[pre.length - 1];
+  const sisaBefore = pelRow.sisa;
+  const sisaAfter = sisaBefore - ev.amount;
+
+  if (sisaAfter <= 0.01) {
+    return { schedule, bungaHemat: 0, penaltiAmt: 0, tenorHemat: 0, cicilanBaru: 0, sisaAfter: 0, skipped: true };
+  }
+
+  const penaltiAmt = ev.amount * (ev.penalti / 100);
+  const bungaTanpa = schedule.slice(idx + 1).reduce((a, r) => a + r.bunga, 0);
+
+  // Build step boundary ranges directly from the steps[] config.
+  // Each step covers a contiguous range of months.
+  // stepBoundaries[i] = { blnStart, blnEnd, rate, stepIdx }
+  const stepBoundaries = [];
+  let bStart = 1;
+  steps.forEach((s, i) => {
+    const blnEnd = bStart + s.dur * 12 - 1;
+    stepBoundaries.push({ blnStart: bStart, blnEnd, rate: s.rate / 100 / 12, stepIdx: i });
+    bStart = blnEnd + 1;
+  });
+
+  function getStepForMonth(m) {
+    // Find the step boundary this month falls into
+    for (const b of stepBoundaries) {
+      if (m >= b.blnStart && m <= b.blnEnd) return b;
+    }
+    // Beyond all defined steps → use last step
+    return stepBoundaries[stepBoundaries.length - 1];
+  }
+
+  // Remaining months in the CURRENT schedule after pelunasan month
+  const remainingMonths = schedule.length - idx - 1;
+
+  const newRows = [];
+
+  if (ev.option === 'reduce-tenor') {
+    // Keep cicilan, walk through step periods with correct rates, stop when balance clears.
+    // At each period boundary, recalculate cicilan vs new rate + remaining months.
+    let s = sisaAfter;
+    let m = ev.bulan + 1;
+    let currentStepIdx = getStepForMonth(ev.bulan).stepIdx;
+    let currentRate    = getStepForMonth(ev.bulan).rate;
+    // How many months remain in the original schedule from this point
+    let origRemaining = schedule.length - idx - 1;
+    let cicilan = anuitas(s, currentRate, origRemaining);
+    const maxMonths = schedule.length * 2;
+    let count = 0;
+
+    while (s > 0.01 && count < maxMonths) {
+      const stepInfo = getStepForMonth(m);
+      if (stepInfo.stepIdx !== currentStepIdx) {
+        currentStepIdx = stepInfo.stepIdx;
+        currentRate    = stepInfo.rate;
+        // Remaining original months from m onward
+        const remOrig = Math.max(origRemaining - count, 1);
+        cicilan = anuitas(s, currentRate, remOrig);
+      }
+      const bunga = s * currentRate;
+      const pkok  = Math.min(cicilan - bunga, s);
+      if (pkok <= 0) break;
+      s = Math.max(s - pkok, 0);
+      newRows.push({ bln: m, cicilan, pkok, bunga, sisa: s, stepIdx: currentStepIdx, stepRate: currentRate });
+      m++;
+      count++;
+    }
+
+  } else {
+    // reduce-cicilan: keep SAME number of remaining months, walk through step boundaries.
+    // At each period boundary, recalculate cicilan vs new rate + months left.
+    let s = sisaAfter;
+    let m = ev.bulan + 1;
+    let currentStepIdx = getStepForMonth(ev.bulan).stepIdx;
+    let currentRate    = getStepForMonth(ev.bulan).rate;
+    let cicilan = anuitas(s, currentRate, remainingMonths);
+    let monthsLeft = remainingMonths;
+
+    for (let k = 0; k < remainingMonths && s > 0.01; k++, m++, monthsLeft--) {
+      const stepInfo = getStepForMonth(m);
+      if (stepInfo.stepIdx !== currentStepIdx) {
+        currentStepIdx = stepInfo.stepIdx;
+        currentRate    = stepInfo.rate;
+        cicilan = anuitas(s, currentRate, monthsLeft);
+      }
+      const bunga = s * currentRate;
+      const pkok  = Math.min(cicilan - bunga, s);
+      s = Math.max(s - pkok, 0);
+      newRows.push({ bln: m, cicilan, pkok, bunga, sisa: s, stepIdx: currentStepIdx, stepRate: currentRate });
     }
   }
-  return evs;
-}
 
-/*
- * buildBaseSchedule
- * ─────────────────
- * Convenience wrapper: pure base loan, no extra payments.
- * Returns the same shape as before so all UI code is unchanged.
- */
-function buildBaseSchedule(pokok, totalBulan) {
-  const rateEvents = buildRateChangeEvents();
-  return calculateDynamicLoan(pokok, totalBulan, rateEvents);
-}
+  const bungaDengan = newRows.reduce((a, r) => a + r.bunga, 0);
+  const bungaHemat = bungaTanpa - bungaDengan;
+  const tenorHemat = (schedule.length - idx - 1) - newRows.length;
+  const cicilanBaru = newRows.length > 0 ? newRows[0].cicilan : 0;
+  const blnAkhir = newRows.length > 0 ? newRows[newRows.length - 1].bln : ev.bulan;
 
-/*
- * runWithPelunasan
- * ────────────────
- * Runs the full loan with both rate-change events AND extra-payment events,
- * then computes savings stats by comparing against a clean base run.
- *
- * pelEventsUI: array of { bulan, amount, option, penalti } from the UI.
- * Returns { schedule, cicilanAwal, periodSummary, savingsList, baseBunga }.
- */
-function runWithPelunasan(pokok, totalBulan, pelEventsUI) {
-  const rateEvents = buildRateChangeEvents();
-
-  // ── base run (no extra payments) to get reference total bunga ──
-  const baseResult = calculateDynamicLoan(pokok, totalBulan, rateEvents);
-  const baseBunga  = baseResult.schedule.reduce((a, r) => a + r.bunga, 0);
-
-  if (!pelEventsUI || pelEventsUI.length === 0) {
-    return { ...baseResult, savingsList: [], baseBunga };
-  }
-
-  // ── convert UI pelEvents into EXTRA_PAYMENT LoanEvents ──
-  const pelLoanEvents = pelEventsUI.map(ev => ({
-    month:   ev.bulan,
-    type:    'EXTRA_PAYMENT',
-    value:   ev.amount,
-    option:  ev.option,
-    penalti: ev.penalti,
-  }));
-
-  const allEvents = [...rateEvents, ...pelLoanEvents];
-  const result    = calculateDynamicLoan(pokok, totalBulan, allEvents);
-
-  // ── compute per-event savings ──
-  // Strategy: run incremental clean sims — one event at a time — to isolate
-  // each event's marginal contribution.
-  const savingsList = [];
-  let prevBunga = baseBunga;
-  const sortedPel = [...pelEventsUI].sort((a, b) => a.bulan - b.bulan);
-
-  for (let i = 0; i <= sortedPel.length - 1; i++) {
-    const subset = sortedPel.slice(0, i + 1);
-    const subEvents = [
-      ...rateEvents,
-      ...subset.map(ev => ({
-        month: ev.bulan, type: 'EXTRA_PAYMENT',
-        value: ev.amount, option: ev.option, penalti: ev.penalti,
-      })),
-    ];
-    const subResult  = calculateDynamicLoan(pokok, totalBulan, subEvents);
-    const subBunga   = subResult.schedule.reduce((a, r) => a + r.bunga, 0);
-    const ev         = sortedPel[i];
-    const bungaHemat = prevBunga - subBunga;
-    const penaltiAmt = ev.amount * ev.penalti / 100;
-    const tenorHemat = baseResult.schedule.length - subResult.schedule.length; // vs base
-
-    // find what cicilan became right after this prepayment
-    const rowAfter   = subResult.schedule.find(r => r.bln === ev.bulan + 1);
-    const lastRow    = subResult.schedule[subResult.schedule.length - 1];
-
-    savingsList.push({
-      label:       `Pelunasan Bln ke-${ev.bulan}`,
-      amount:      ev.amount,
-      penaltiAmt,
-      bungaHemat:  Math.max(bungaHemat, 0),
-      tenorHemat:  Math.max(tenorHemat, 0),
-      netHemat:    Math.max(bungaHemat, 0) - penaltiAmt,
-      cicilanBaru: rowAfter ? rowAfter.cicilan : 0,
-      sisaAfter:   (subResult.schedule.find(r => r.bln === ev.bulan)?.sisa ?? 0),
-      blnSetelah:  ev.bulan + 1,
-      blnAkhir:    lastRow?.bln ?? ev.bulan,
-      option:      ev.option,
-    });
-
-    prevBunga = subBunga;
-  }
-
-  return { ...result, savingsList, baseBunga };
-}
-
-/*
- * applyPelunasan  [used exclusively by Optimasi feature]
- * ───────────────
- * Runs a scenario with a given list of pelunasan events and returns
- * aggregate statistics for ranking. Thin wrapper over runWithPelunasan.
- */
-function applyPelunasan(baseSchedule, evList) {
-  // baseSchedule is always a FRESH base schedule from buildBaseSchedule,
-  // tagged with _totalMonths and _principal by jalankanOptimasi.
-  // evList shape: { bulan, amount, option, penalti }
-  const principal  = baseSchedule._principal  || (baseSchedule[0].sisa + baseSchedule[0].pkok);
-  const totalMonths = baseSchedule._totalMonths || baseSchedule.length;
-
-  const result     = runWithPelunasan(principal, totalMonths, evList);
-  const totalBunga = result.schedule.reduce((a, r) => a + r.bunga, 0);
-  const baseBunga  = baseSchedule.reduce((a, r) => a + r.bunga, 0);
+  const markedPre = [...pre];
+  markedPre[markedPre.length - 1] = { ...pelRow, isPelRow: true };
 
   return {
-    schedule:        result.schedule,
-    totalBunga,
-    totalBungaHemat: Math.max(baseBunga - totalBunga, 0),
-    totalPenalti:    evList.reduce((a, ev) => a + ev.amount * ev.penalti / 100, 0),
-    totalTenorHemat: Math.max(baseSchedule.length - result.schedule.length, 0),
-    netHemat:        Math.max(baseBunga - totalBunga, 0) - evList.reduce((a, ev) => a + ev.amount * ev.penalti / 100, 0),
-    tenorEfektif:    result.schedule.length,
+    schedule: [...markedPre, ...newRows],
+    bungaHemat, penaltiAmt, tenorHemat, cicilanBaru, sisaAfter, blnAkhir, skipped: false
   };
 }
 
+/*
+ * Apply a list of pelunasan events sequentially.
+ * Returns full metrics.
+ */
+function applyPelunasanList(baseSchedule, evList) {
+  let schedule = [...baseSchedule];
+  let totalBungaHemat = 0;
+  let totalPenalti = 0;
+  let totalTenorHemat = 0;
 
-function getSplitRatios(splitVal) {
-  const map = {
-    '50-50':[0.5,0.5], '60-40':[0.6,0.4], '70-30':[0.7,0.3],
-    '40-60':[0.4,0.6], '30-70':[0.3,0.7],
+  for (const ev of evList) {
+    const res = applyOnePelunasan(schedule, ev);
+    if (!res.skipped) {
+      schedule = res.schedule;
+      totalBungaHemat += res.bungaHemat;
+      totalPenalti += res.penaltiAmt;
+      totalTenorHemat += res.tenorHemat;
+    }
+  }
+
+  const totalBunga = schedule.reduce((a, r) => a + r.bunga, 0);
+  return {
+    schedule,
+    totalBunga,
+    totalBungaHemat,
+    totalPenalti,
+    totalTenorHemat,
+    netHemat: totalBungaHemat - totalPenalti,
+    tenorEfektif: schedule.length,
   };
-  return map[splitVal] || [0.5,0.5];
 }
 
 /* ── OPTIMASI ── */
+function getSplitRatios(splitVal) {
+  const map = {'50-50':[0.5,0.5],'60-40':[0.6,0.4],'70-30':[0.7,0.3],'40-60':[0.4,0.6],'30-70':[0.3,0.7]};
+  return map[splitVal] || [0.5,0.5];
+}
+
 function jalankanOptimasi() {
-  const harga    = rawVal('s-harga');
-  const dp       = rawVal('s-dp');
-  const tenor    = parseInt($('s-tenor').value) || 0;
-  const pokok    = harga - dp;
+  const harga = rawVal('s-harga');
+  const dp = rawVal('s-dp');
+  const tenor = parseInt($('s-tenor').value) || 0;
+  const pokok = harga - dp;
   const totalBulan = tenor * 12;
-  const budget   = rawVal('opt-budget');
+  const budget = rawVal('opt-budget');
   const penaltiPct = parseFloat($('opt-penalti').value) || 1;
-  const bln1     = parseInt($('opt-bln1').value) || 24;
-  const bln2     = parseInt($('opt-bln2').value) || 48;
+  const bln1 = parseInt($('opt-bln1').value) || 24;
+  const bln2 = parseInt($('opt-bln2').value) || 48;
   const splitVal = $('opt-split').value;
 
   if (!budget || budget <= 0) { alert('Masukkan total dana yang tersedia.'); return; }
 
   const { schedule: baseSchedule } = buildBaseSchedule(pokok, totalBulan);
-  baseSchedule._totalMonths = totalBulan;   // passed through to applyPelunasan
-  baseSchedule._principal   = pokok;        // passed through to applyPelunasan
+  const baseBunga = baseSchedule.reduce((a, r) => a + r.bunga, 0);
 
   const [r1, r2] = getSplitRatios(splitVal);
   const amt1 = Math.round(budget * r1);
   const amt2 = budget - amt1;
-  const splitLabel = splitVal.replace('-',' : ');
+  const splitLabel = splitVal.replace('-', ' : ');
 
   const scenarios = [
-    { name: `1x di Bln ${bln1} — Kurangi Tenor`,
-      events: [{bulan:bln1, amount:budget, option:'reduce-tenor',   penalti:penaltiPct}], tag:'1x Sekaligus' },
-    { name: `1x di Bln ${bln1} — Kurangi Cicilan`,
-      events: [{bulan:bln1, amount:budget, option:'reduce-cicilan', penalti:penaltiPct}], tag:'1x Sekaligus' },
-    { name: `2x Bertahap (${splitLabel}) — Keduanya Kurangi Tenor`,
-      events: [{bulan:bln1,amount:amt1,option:'reduce-tenor',  penalti:penaltiPct},
-               {bulan:bln2,amount:amt2,option:'reduce-tenor',  penalti:penaltiPct}], tag:`2x Bertahap (${splitLabel})` },
-    { name: `2x Bertahap (${splitLabel}) — Keduanya Kurangi Cicilan`,
-      events: [{bulan:bln1,amount:amt1,option:'reduce-cicilan',penalti:penaltiPct},
-               {bulan:bln2,amount:amt2,option:'reduce-cicilan',penalti:penaltiPct}], tag:`2x Bertahap (${splitLabel})` },
-    { name: `2x Bertahap (${splitLabel}) — Tenor lalu Cicilan`,
-      events: [{bulan:bln1,amount:amt1,option:'reduce-tenor',  penalti:penaltiPct},
-               {bulan:bln2,amount:amt2,option:'reduce-cicilan',penalti:penaltiPct}], tag:`2x Bertahap (${splitLabel})` },
-    { name: `2x Bertahap (${splitLabel}) — Cicilan lalu Tenor`,
-      events: [{bulan:bln1,amount:amt1,option:'reduce-cicilan',penalti:penaltiPct},
-               {bulan:bln2,amount:amt2,option:'reduce-tenor',  penalti:penaltiPct}], tag:`2x Bertahap (${splitLabel})` },
+    {
+      name: `1x di Bln ${bln1} — Kurangi Tenor`,
+      events: [{ bulan: bln1, amount: budget, option: 'reduce-tenor', penalti: penaltiPct }],
+      tag: '1x Sekaligus',
+    },
+    {
+      name: `1x di Bln ${bln1} — Kurangi Cicilan`,
+      events: [{ bulan: bln1, amount: budget, option: 'reduce-cicilan', penalti: penaltiPct }],
+      tag: '1x Sekaligus',
+    },
+    {
+      name: `2x Bertahap (${splitLabel}) — Keduanya Kurangi Tenor`,
+      events: [
+        { bulan: bln1, amount: amt1, option: 'reduce-tenor', penalti: penaltiPct },
+        { bulan: bln2, amount: amt2, option: 'reduce-tenor', penalti: penaltiPct },
+      ],
+      tag: `2x Bertahap (${splitLabel})`,
+    },
+    {
+      name: `2x Bertahap (${splitLabel}) — Keduanya Kurangi Cicilan`,
+      events: [
+        { bulan: bln1, amount: amt1, option: 'reduce-cicilan', penalti: penaltiPct },
+        { bulan: bln2, amount: amt2, option: 'reduce-cicilan', penalti: penaltiPct },
+      ],
+      tag: `2x Bertahap (${splitLabel})`,
+    },
+    {
+      name: `2x Bertahap (${splitLabel}) — Tenor lalu Cicilan`,
+      events: [
+        { bulan: bln1, amount: amt1, option: 'reduce-tenor', penalti: penaltiPct },
+        { bulan: bln2, amount: amt2, option: 'reduce-cicilan', penalti: penaltiPct },
+      ],
+      tag: `2x Bertahap (${splitLabel})`,
+    },
+    {
+      name: `2x Bertahap (${splitLabel}) — Cicilan lalu Tenor`,
+      events: [
+        { bulan: bln1, amount: amt1, option: 'reduce-cicilan', penalti: penaltiPct },
+        { bulan: bln2, amount: amt2, option: 'reduce-tenor', penalti: penaltiPct },
+      ],
+      tag: `2x Bertahap (${splitLabel})`,
+    },
   ];
 
   const results = scenarios.map(sc => {
-    const res = applyPelunasan([...baseSchedule], sc.events);
+    const res = applyPelunasanList([...baseSchedule], sc.events);
     return {
       ...sc,
-      totalBunga:     res.totalBunga,
-      totalBungaHemat:res.totalBungaHemat,
-      totalPenalti:   res.totalPenalti,
-      netHemat:       res.netHemat,
-      tenorEfektif:   res.tenorEfektif,
-      totalTenorHemat:res.totalTenorHemat,
-      efisiensi:      res.netHemat / budget * 100,
+      totalBunga: res.totalBunga,
+      totalBungaHemat: res.totalBungaHemat,
+      totalPenalti: res.totalPenalti,
+      netHemat: res.netHemat,
+      tenorEfektif: res.tenorEfektif,
+      totalTenorHemat: res.totalTenorHemat,
+      efisiensi: res.netHemat / budget * 100,
     };
   });
+
   results.sort((a, b) => b.netHemat - a.netHemat);
 
   const winner = results[0];
@@ -1046,15 +943,18 @@ function jalankanOptimasi() {
       <div class="optim-winner-label">🏆 Strategi Terbaik</div>
       <div class="optim-winner-title">${winner.name}</div>
       <div class="optim-winner-sub">Dana: ${fmtS(budget)} · Penalti: ${penaltiPct}%/event</div>
-      <div class="optim-winner-saving">${fmt(Math.max(winner.netHemat,0))} dihemat</div>
+      <div class="optim-winner-saving">${fmt(Math.max(winner.netHemat, 0))} dihemat</div>
     </div>`;
 
   const rankClasses = ['r1','r2','r3','r4','r4','r4'];
-  const rankEmojis  = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣'];
-  const scenList = $('optim-scenario-list'); scenList.innerHTML = '';
+  const rankEmojis = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣'];
+  const scenList = $('optim-scenario-list');
+  scenList.innerHTML = '';
   results.forEach((sc, i) => {
+    const isBest = i === 0;
+    const isWorst = i === results.length - 1;
     const div = document.createElement('div');
-    div.className = 'optim-scenario' + (i===0?' best':'') + (i===results.length-1&&i>0?' worst':'');
+    div.className = 'optim-scenario' + (isBest ? ' best' : '') + (isWorst && !isBest ? ' worst' : '');
     div.innerHTML = `
       <div class="optim-scenario-hdr">
         <div class="optim-scenario-name">
@@ -1063,71 +963,98 @@ function jalankanOptimasi() {
         </div>
       </div>
       <div class="optim-stat-row"><span class="lbl">Total Bunga (setelah)</span><span class="val red">${fmtS(sc.totalBunga)}</span></div>
-      <div class="optim-stat-row"><span class="lbl">Bunga Dihemat</span><span class="val green">${fmtS(Math.max(sc.totalBungaHemat,0))}</span></div>
+      <div class="optim-stat-row"><span class="lbl">Bunga Dihemat</span><span class="val green">${fmtS(Math.max(sc.totalBungaHemat, 0))}</span></div>
       <div class="optim-stat-row"><span class="lbl">Total Penalti</span><span class="val red">${fmt(sc.totalPenalti)}</span></div>
-      <div class="optim-stat-row"><span class="lbl">Tenor Berkurang</span><span class="val gold">${sc.totalTenorHemat>0?sc.totalTenorHemat+' bulan':'Tenor tetap'}</span></div>
+      <div class="optim-stat-row"><span class="lbl">Tenor Berkurang</span><span class="val gold">${sc.totalTenorHemat > 0 ? sc.totalTenorHemat + ' bulan' : 'Tenor tetap'}</span></div>
       <div class="optim-stat-row"><span class="lbl">Efisiensi Dana</span><span class="val green">${sc.efisiensi.toFixed(2)}%</span></div>
       <div class="optim-net-saving">
         <span class="lbl">💰 Net Penghematan</span>
-        <span class="val">${fmt(Math.max(sc.netHemat,0))}</span>
+        <span class="val">${fmt(Math.max(sc.netHemat, 0))}</span>
       </div>`;
     scenList.appendChild(div);
   });
 
-  const wrap = $('optim-comparison-wrap'); wrap.style.display = 'block';
+  const wrap = $('optim-comparison-wrap');
+  wrap.style.display = 'block';
   $('optim-cmp-table').innerHTML = `
     <thead><tr>
       <th>Strategi</th><th>Bunga Dihemat</th><th>Penalti</th><th>Net Hemat</th><th>Tenor Hemat</th>
     </tr></thead>
     <tbody>
-      ${results.map((sc,i)=>`
-        <tr class="${i===0?'best-row':''}">
+      ${results.map((sc, i) => `
+        <tr class="${i === 0 ? 'best-row' : ''}">
           <td>${rankEmojis[i]} ${sc.tag}</td>
-          <td class="diff-pos">${fmtS(Math.max(sc.totalBungaHemat,0))}</td>
+          <td class="diff-pos">${fmtS(Math.max(sc.totalBungaHemat, 0))}</td>
           <td class="diff-neg">${fmt(sc.totalPenalti)}</td>
-          <td class="${sc.netHemat>0?'diff-pos':'diff-neg'}">${fmt(Math.max(sc.netHemat,0))}</td>
-          <td>${sc.totalTenorHemat>0?sc.totalTenorHemat+' bln':'—'}</td>
+          <td class="${sc.netHemat > 0 ? 'diff-pos' : 'diff-neg'}">${fmt(Math.max(sc.netHemat, 0))}</td>
+          <td>${sc.totalTenorHemat > 0 ? sc.totalTenorHemat + ' bln' : '—'}</td>
         </tr>`).join('')}
     </tbody>`;
 
   const optRes = $('optim-results');
   optRes.classList.add('show');
-  setTimeout(() => optRes.scrollIntoView({behavior:'smooth', block:'start'}), 100);
+  setTimeout(() => optRes.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 }
 
 /* ── HITUNG ── */
 function hitung() {
-  const harga  = rawVal('s-harga');
-  const dp     = rawVal('s-dp');
-  const tenor  = parseInt($('s-tenor').value) || 0;
-  const pokok  = harga - dp;
+  const harga = rawVal('s-harga');
+  const dp = rawVal('s-dp');
+  const tenor = parseInt($('s-tenor').value) || 0;
+  const pokok = harga - dp;
   const totalBulan = tenor * 12;
 
-  // ── Sync UI values into pelEvents ──
+  const { schedule: baseSchedule, cicilanAwal, periodSummary } = buildBaseSchedule(pokok, totalBulan);
+
+  // Sync pelunasan event data from DOM
   pelEvents.forEach(ev => {
-    ev.bulan   = parseInt($(`pb-${ev.id}`)?.value)   || ev.bulan;
+    ev.bulan   = parseInt($(`pb-${ev.id}`)?.value) || ev.bulan;
     ev.amount  = rawVal(`pa-${ev.id}`);
     ev.penalti = parseFloat($(`pp-${ev.id}`)?.value) || ev.penalti;
-    ev.option  = $(`po-${ev.id}`)?.value             || ev.option;
+    ev.option  = $(`po-${ev.id}`)?.value || ev.option;
   });
 
-  // ── Single event-driven run ──
-  const activeEvents = pelOn ? pelEvents.filter(ev => ev.amount > 0) : [];
-  const result = runWithPelunasan(pokok, totalBulan, activeEvents);
-  const { schedule, cicilanAwal, periodSummary, savingsList } = result;
+  // Sort events by month ascending (apply in chronological order)
+  const sortedEvents = pelOn ? [...pelEvents].sort((a, b) => a.bulan - b.bulan) : [];
 
-  const totalCicilan  = schedule.reduce((a, r) => a + r.cicilan, 0);
-  const totalBunga    = schedule.reduce((a, r) => a + r.bunga,   0);
-  const tenorEfektif  = schedule.length;
+  // Apply each event sequentially, collecting per-event metrics
+  let schedule = [...baseSchedule];
+  const savingsList = [];
 
-  $('res-total').textContent  = fmt(totalCicilan);
-  $('res-sub').textContent    = `dalam ${tenorEfektif} bulan (${(tenorEfektif/12).toFixed(1)} tahun)`;
+  for (const ev of sortedEvents) {
+    const beforeSchedule = schedule;
+    const res = applyOnePelunasan(beforeSchedule, ev);
+    if (!res.skipped) {
+      schedule = res.schedule;
+      savingsList.push({
+        label: `Pelunasan Bln ke-${ev.bulan}`,
+        amount: ev.amount,
+        penaltiAmt: res.penaltiAmt,
+        bungaHemat: res.bungaHemat,
+        tenorHemat: res.tenorHemat,
+        netHemat: res.bungaHemat - res.penaltiAmt,
+        cicilanBaru: res.cicilanBaru,
+        sisaAfter: res.sisaAfter,
+        blnSetelah: ev.bulan + 1,
+        blnAkhir: res.blnAkhir,
+        option: ev.option,
+      });
+    }
+  }
+
+  const totalCicilan = schedule.reduce((a, r) => a + r.cicilan, 0);
+  const totalBunga   = schedule.reduce((a, r) => a + r.bunga, 0);
+  const tenorEfektif = schedule.length;
+
+  // ── Result hero ──
+  $('res-total').textContent = fmt(totalCicilan);
+  $('res-sub').textContent = `dalam ${tenorEfektif} bulan (${(tenorEfektif/12).toFixed(1)} tahun)`;
   $('res-pokok').textContent  = fmtS(pokok);
   $('res-bunga').textContent  = fmtS(totalBunga);
-  $('res-cicilan').textContent= fmtS(cicilanAwal) + '/bln';
+  $('res-cicilan').textContent = fmtS(cicilanAwal) + '/bln';
   $('res-tenor').textContent  = `${tenorEfektif} bln`;
 
-  /* Period summary (original, unmodified periods) */
+  // ── Period summary (base, before pelunasan) ──
   const psb = $('period-summary-box');
   psb.innerHTML = '<div class="psb-header">📶 Cicilan Per Periode</div>';
   periodSummary.forEach(p => {
@@ -1135,7 +1062,7 @@ function hitung() {
     row.className = 'period-row';
     row.innerHTML = `
       <div class="period-left">
-        <div class="period-badge ${p.isFloat?'float':''}">${p.isFloat?'FLOAT':'FIX'}</div>
+        <div class="period-badge ${p.isFloat ? 'float' : ''}">${p.isFloat ? 'FLOAT' : 'FIX'}</div>
         <div>
           <div class="period-name">${p.label} · ${p.rate}%/thn</div>
           <div class="period-meta">Bln ${p.blnStart}–${p.blnEnd} · Pokok awal: ${fmtS(p.sisaAwal)}</div>
@@ -1146,11 +1073,11 @@ function hitung() {
   });
   psb.style.display = 'block';
 
-  /* After-prepayment cicilan summary */
+  // ── After-pelunasan period summary ──
   const apb = $('after-pel-box');
   if (pelOn && savingsList.length > 0) {
     apb.innerHTML = '<div class="psb-header">💰 Cicilan Per Periode Setelah Pelunasan</div>';
-    const firstPelBln = savingsList[0].blnSetelah - 1;
+
     const addRow = (badge, badgeClass, label, meta, cicilan, highlight) => {
       const row = document.createElement('div');
       row.className = 'period-row' + (highlight ? ' pel-after-highlight' : '');
@@ -1165,8 +1092,11 @@ function hitung() {
         <div class="period-cicilan">${fmt(cicilan)}<span>/bln</span></div>`;
       apb.appendChild(row);
     };
+
+    const firstPelBln = savingsList[0].blnSetelah - 1;
     addRow('AWAL', '', 'Sebelum Pelunasan',
       `Bln 1–${firstPelBln} · Cicilan bertingkat per periode`, cicilanAwal, false);
+
     savingsList.forEach((s, i) => {
       const opsiLabel = s.option === 'reduce-tenor' ? 'Kurangi Tenor' : 'Kurangi Cicilan';
       addRow(`#${i+1}`, 'float', `Setelah ${s.label}`,
@@ -1178,52 +1108,66 @@ function hitung() {
     apb.style.display = 'none';
   }
 
-  /* Savings banners */
-  const sc = $('savings-container'); sc.innerHTML = '';
+  // ── Savings banners ──
+  const sc = $('savings-container');
+  sc.innerHTML = '';
   savingsList.forEach(s => {
-    const d = document.createElement('div'); d.className = 'savings-banner';
+    const d = document.createElement('div');
+    d.className = 'savings-banner';
     d.innerHTML = `
       <div class="savings-banner-title">💰 ${s.label} — ${fmtS(s.amount)}</div>
       <div class="savings-row"><span class="lbl">Penalti dibayar</span><span class="val neg">${fmt(s.penaltiAmt)}</span></div>
-      <div class="savings-row"><span class="lbl">Bunga dihemat</span><span class="val pos">${fmt(Math.max(s.bungaHemat,0))}</span></div>
-      <div class="savings-row"><span class="lbl">Tenor berkurang</span><span class="val pos">${s.tenorHemat>0?s.tenorHemat+' bulan':'Tenor tetap'}</span></div>
+      <div class="savings-row"><span class="lbl">Bunga dihemat</span><span class="val pos">${fmt(Math.max(s.bungaHemat, 0))}</span></div>
+      <div class="savings-row"><span class="lbl">Tenor berkurang</span><span class="val pos">${s.tenorHemat > 0 ? s.tenorHemat + ' bulan' : 'Tenor tetap'}</span></div>
       <div class="savings-row savings-divider">
         <span class="lbl" style="font-weight:700;color:var(--ink)">Net Penghematan</span>
-        <span class="val pos" style="font-size:15px">${fmt(Math.max(s.netHemat,0))}</span>
+        <span class="val pos" style="font-size:15px">${fmt(Math.max(s.netHemat, 0))}</span>
       </div>`;
     sc.appendChild(d);
   });
+
   if (savingsList.length > 1) {
-    const totPenalti = savingsList.reduce((a,s)=>a+s.penaltiAmt,0);
-    const totBunga   = savingsList.reduce((a,s)=>a+s.bungaHemat,0);
-    const totTenor   = savingsList.reduce((a,s)=>a+s.tenorHemat,0);
-    const totNet     = savingsList.reduce((a,s)=>a+s.netHemat,0);
-    const d = document.createElement('div'); d.className = 'savings-banner';
+    const totPenalti = savingsList.reduce((a, s) => a + s.penaltiAmt, 0);
+    const totBunga   = savingsList.reduce((a, s) => a + s.bungaHemat, 0);
+    const totTenor   = savingsList.reduce((a, s) => a + s.tenorHemat, 0);
+    const totNet     = savingsList.reduce((a, s) => a + s.netHemat, 0);
+    const d = document.createElement('div');
+    d.className = 'savings-banner';
     d.style.cssText = 'border-color:var(--green-light);background:var(--green-pale)';
     d.innerHTML = `
       <div class="savings-banner-title" style="color:var(--green-deep)">🎉 Total ${savingsList.length} Event Pelunasan</div>
       <div class="savings-row"><span class="lbl">Total penalti</span><span class="val neg">${fmt(totPenalti)}</span></div>
-      <div class="savings-row"><span class="lbl">Total bunga dihemat</span><span class="val pos">${fmt(Math.max(totBunga,0))}</span></div>
-      <div class="savings-row"><span class="lbl">Total tenor berkurang</span><span class="val pos">${totTenor>0?totTenor+' bulan':'Tenor tetap'}</span></div>
+      <div class="savings-row"><span class="lbl">Total bunga dihemat</span><span class="val pos">${fmt(Math.max(totBunga, 0))}</span></div>
+      <div class="savings-row"><span class="lbl">Total tenor berkurang</span><span class="val pos">${totTenor > 0 ? totTenor + ' bulan' : 'Tenor tetap'}</span></div>
       <div class="savings-row savings-divider">
         <span class="lbl" style="font-weight:800;color:var(--ink)">Net Hemat Keseluruhan</span>
-        <span class="val pos" style="font-size:16px">${fmt(Math.max(totNet,0))}</span>
+        <span class="val pos" style="font-size:16px">${fmt(Math.max(totNet, 0))}</span>
       </div>`;
     sc.appendChild(d);
   }
 
-  /* Schedule table */
-  const tbody = $('schedule-body'); tbody.innerHTML = '';
+  // ── Schedule table ──
+  // Build a map of bln → period label for separator rows
+  // Use periodSummary from base (for original period boundaries)
+  const periodByBln = {};
+  periodSummary.forEach((p, i) => {
+    periodByBln[p.blnStart] = { ...p, idx: i };
+  });
+
+  const tbody = $('schedule-body');
+  tbody.innerHTML = '';
   $('sch-count').textContent = `${schedule.length} bulan`;
-  let lastPIdx = -1;
+
+  let lastStepIdx = -1;
   schedule.forEach((r, i) => {
-    // Period separator — only for rows that still carry pIdx (original or propagated)
-    if (r.pIdx !== undefined && r.pIdx !== lastPIdx) {
-      lastPIdx = r.pIdx;
-      const ps = periodSummary[r.pIdx];
+    // Insert period separator when stepIdx changes
+    if (r.stepIdx !== undefined && r.stepIdx !== lastStepIdx) {
+      lastStepIdx = r.stepIdx;
+      const ps = periodSummary[r.stepIdx];
       if (ps) {
-        const sep = document.createElement('tr'); sep.className = 'period-sep';
-        sep.innerHTML = `<td colspan="5">📶 ${ps.label} — ${ps.rate}%/thn — ${fmt(ps.cicilan)}/bln</td>`;
+        const sep = document.createElement('tr');
+        sep.className = 'period-sep';
+        sep.innerHTML = `<td colspan="6">📶 ${ps.label} — ${ps.rate}%/thn — ${fmt(ps.cicilan)}/bln</td>`;
         tbody.appendChild(sep);
       }
     }
@@ -1231,7 +1175,8 @@ function hitung() {
     if (r.isPelRow) tr.classList.add('pel-row');
     if (i === schedule.length - 1) tr.classList.add('last-row');
     tr.innerHTML = `
-      <td>${r.bln}${r.isPelRow?' 💰':''}</td>
+      <td>${r.bln}${r.isPelRow ? ' 💰' : ''}</td>
+      <td style="color:var(--ink-60);font-size:11px">${r.stepRate !== undefined ? (r.stepRate * 12 * 100).toFixed(2) + '%' : '—'}</td>
       <td>${fmtS(r.cicilan)}</td>
       <td>${fmtS(r.pkok)}</td>
       <td>${fmtS(r.bunga)}</td>
@@ -1240,13 +1185,13 @@ function hitung() {
   });
 
   $('results-section').classList.add('show');
-  setTimeout(() => $('results-section').scrollIntoView({behavior:'smooth', block:'start'}), 100);
+  setTimeout(() => $('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 }
 
 /* ── INIT ── */
 window.addEventListener('DOMContentLoaded', () => {
   setCur('s-harga', 1000000000);
-  syncDP();   // sets DP value + placeholder from slider (20% default)
+  setCur('s-dp', 200000000);
   renderSteps();
 });
 
