@@ -145,76 +145,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
 .schedule-table tr.last-row td { border-bottom:none; font-weight:800; background:var(--green-pale); }
 .schedule-table tr.period-sep td { background:var(--green-deep); color:var(--white); font-size:11px; font-weight:700; padding:7px 12px; text-align:left; }
 
-/* ── OPTIMASI ── */
-.optim-card { background: linear-gradient(135deg, #0B3D2E 0%, #1565C0 100%); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: 0 6px 32px rgba(11,61,46,0.22); color: var(--white); }
-.optim-card-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:0; }
-.optim-card-title { font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; display:flex; align-items:center; gap:8px; color: rgba(255,255,255,0.85); }
-.optim-card-title .dot { width:8px; height:8px; border-radius:50%; background: var(--gold); display:inline-block; }
-.optim-toggle { width:48px; height:28px; border-radius:14px; background:rgba(255,255,255,0.2); border:none; cursor:pointer; position:relative; transition:background 0.2s; flex-shrink:0; }
-.optim-toggle.on { background:var(--gold); }
-.optim-toggle::after { content:''; position:absolute; width:22px; height:22px; border-radius:50%; background:var(--white); top:3px; left:3px; transition:transform 0.2s; box-shadow:0 1px 4px rgba(0,0,0,0.2); }
-.optim-toggle.on::after { transform:translateX(20px); }
-.optim-body { margin-top:16px; }
-.optim-hint { font-size:12px; color:rgba(255,255,255,0.7); margin-bottom:16px; line-height:1.6; }
-.optim-field { margin-bottom: 14px; }
-.optim-field label { display:block; font-size:12.5px; font-weight:600; color:rgba(255,255,255,0.8); margin-bottom:6px; }
-.optim-input-wrap { position:relative; display:flex; align-items:center; }
-.optim-prefix { position:absolute; left:14px; font-size:13px; font-weight:700; color:rgba(255,255,255,0.6); pointer-events:none; }
-.optim-field input, .optim-field select {
-  width:100%; padding:12px 14px; border:1.5px solid rgba(255,255,255,0.2); border-radius:var(--radius-sm);
-  font-size:15px; font-family:'Plus Jakarta Sans',sans-serif; font-weight:600;
-  color:var(--white); background:rgba(255,255,255,0.1); outline:none; transition:border-color 0.2s; appearance:none;
-}
-.optim-field input.has-prefix { padding-left:38px; }
-.optim-field input::placeholder { color:rgba(255,255,255,0.35); }
-.optim-field input:focus, .optim-field select:focus { border-color:var(--gold); background:rgba(255,255,255,0.15); }
-.optim-field select option { background: var(--green-deep); color: var(--white); }
-.optim-run-btn { width:100%; background:var(--gold); color:#3D2E00; border:none; border-radius:var(--radius-sm); padding:14px; font-size:14px; font-weight:800; font-family:'Plus Jakarta Sans',sans-serif; cursor:pointer; margin-top:4px; transition:transform 0.1s, box-shadow 0.1s; box-shadow: 0 4px 16px rgba(245,200,66,0.4); }
-.optim-run-btn:active { transform:scale(0.97); }
-.optim-run-btn:hover { box-shadow: 0 6px 24px rgba(245,200,66,0.6); }
-.optim-results { display:none; }
-.optim-results.show { display:block; animation:slideUp 0.4s ease; }
-.optim-winner-banner { background:linear-gradient(135deg, var(--gold) 0%, #E6A800 100%); border-radius:var(--radius); padding:20px; margin-bottom:14px; box-shadow: 0 4px 20px rgba(245,200,66,0.4); }
-.optim-winner-label { font-size:11px; font-weight:800; letter-spacing:2px; color:#5A3E00; text-transform:uppercase; margin-bottom:6px; }
-.optim-winner-title { font-family:'DM Serif Display',serif; font-size:22px; color:#3D2E00; margin-bottom:6px; line-height:1.3; }
-.optim-winner-sub { font-size:13px; color:#5A3E00; font-weight:600; }
-.optim-winner-saving { font-family:'DM Serif Display',serif; font-size:28px; color:#0B3D2E; margin-top:8px; }
-.optim-scenario-grid { display:flex; flex-direction:column; gap:12px; margin-bottom:14px; }
-.optim-scenario { background:var(--white); border-radius:var(--radius-sm); padding:16px; border:2px solid var(--ink-20); box-shadow:var(--shadow); transition: border-color 0.2s; }
-.optim-scenario.best { border-color: var(--gold); background: linear-gradient(135deg, #FFFDF0 0%, var(--white) 100%); }
-.optim-scenario.worst { border-color: var(--ink-20); opacity: 0.75; }
-.optim-scenario-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
-.optim-scenario-name { font-size:13px; font-weight:800; color:var(--ink); display:flex; align-items:center; gap:8px; }
-.optim-rank-badge { font-size:11px; font-weight:800; padding:3px 9px; border-radius:20px; }
-.optim-rank-badge.r1 { background:var(--gold); color:#3D2E00; }
-.optim-rank-badge.r2 { background:var(--green-pale); color:var(--green-deep); }
-.optim-rank-badge.r3 { background:var(--blue-pale); color:var(--blue); }
-.optim-rank-badge.r4 { background:var(--ink-20); color:var(--ink-60); }
-.optim-stat-row { display:flex; justify-content:space-between; font-size:12.5px; padding:4px 0; border-bottom:1px solid var(--ink-20); }
-.optim-stat-row:last-child { border-bottom:none; }
-.optim-stat-row .lbl { color:var(--ink-60); }
-.optim-stat-row .val { font-weight:700; }
-.optim-stat-row .val.green { color:var(--green-mid); }
-.optim-stat-row .val.red { color:var(--red-warn); }
-.optim-stat-row .val.gold { color:#B8860B; }
-.optim-net-saving { margin-top:10px; padding:10px 12px; background:var(--green-pale); border-radius:var(--radius-sm); display:flex; justify-content:space-between; align-items:center; }
-.optim-net-saving .lbl { font-size:12px; font-weight:700; color:var(--green-deep); }
-.optim-net-saving .val { font-size:17px; font-weight:800; color:var(--green-mid); }
-.optim-scenario.best .optim-net-saving { background: linear-gradient(90deg,var(--gold-light),#FFFDF0); }
-.optim-scenario.best .optim-net-saving .lbl { color:#5A3E00; }
-.optim-scenario.best .optim-net-saving .val { color:#7A5C00; }
-.comparison-table-card { background:var(--white); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); margin-bottom:14px; }
-.comparison-table-card .psb-header { background:linear-gradient(90deg,#0B3D2E,#1565C0); }
-.cmp-table { width:100%; border-collapse:collapse; font-size:12px; }
-.cmp-table th { background:var(--cream); padding:10px 12px; text-align:right; font-weight:700; color:var(--ink-60); font-size:11px; white-space:nowrap; }
-.cmp-table th:first-child { text-align:left; }
-.cmp-table td { padding:10px 12px; text-align:right; border-bottom:1px solid var(--ink-20); white-space:nowrap; }
-.cmp-table td:first-child { text-align:left; font-weight:700; color:var(--ink); }
-.cmp-table tr:last-child td { border-bottom:none; }
-.cmp-table tr.best-row td { background:var(--gold-light); font-weight:800; }
-.cmp-table .diff-pos { color:var(--green-mid); font-weight:700; }
-.cmp-table .diff-neg { color:var(--red-warn); font-weight:700; }
-
 /* bottom nav */
 .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:var(--white); border-top:1px solid var(--ink-20); display:flex; z-index:200; }
 .bottom-nav-btn { flex:1; padding:12px 8px 16px; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10.5px; font-weight:700; color:var(--ink-60); background:none; border:none; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif; }
@@ -228,6 +158,13 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
 .formula-box { background:var(--cream); border-radius:var(--radius-sm); padding:12px 16px; font-size:13px; font-family:monospace; color:var(--green-deep); margin-top:8px; line-height:1.8; }
 .info-chip { display:inline-flex; align-items:center; background:var(--green-pale); color:var(--green-deep); border-radius:20px; padding:4px 10px; font-size:11.5px; font-weight:700; gap:4px; margin-bottom:12px; }
 .hidden { display:none !important; }
+
+/* ── VALIDATION ── */
+.warn-chip { display:flex; align-items:center; gap:6px; background:var(--red-pale); color:var(--red-warn); border:1.5px solid var(--red-warn); border-radius:var(--radius-sm); padding:10px 14px; font-size:12.5px; font-weight:700; margin-top:12px; line-height:1.5; }
+.warn-chip svg { flex-shrink:0; width:16px; height:16px; }
+.ok-chip { display:flex; align-items:center; gap:6px; background:var(--green-pale); color:var(--green-deep); border:1.5px solid var(--green-light); border-radius:var(--radius-sm); padding:8px 14px; font-size:12px; font-weight:700; margin-top:12px; }
+.pel-warn { font-size:11.5px; color:var(--red-warn); font-weight:700; margin-top:6px; display:flex; align-items:center; gap:4px; }
+.pel-event.has-error { border-color:var(--red-warn); background:var(--red-pale); }
 @media (max-width:380px) {
   .result-hero-amount { font-size:26px; }
   .stat-card-value { font-size:14px; }
@@ -270,8 +207,8 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
             oninput="onCurrencyInput(this, syncDPFromInput)" />
         </div>
         <div class="slider-wrap">
-          <input type="range" id="s-dp-slider" min="0" max="50" value="20" step="1" oninput="syncDPFromSlider()" />
-          <div class="slider-labels"><span>0%</span><span>50%</span></div>
+          <input type="range" id="s-dp-slider" min="5" max="50" value="20" step="1" oninput="syncDPFromSlider()" />
+          <div class="slider-labels"><span>5%</span><span>50%</span></div>
         </div>
       </div>
       <div class="field">
@@ -299,6 +236,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
         <tbody id="step-tbody"></tbody>
       </table>
       <button class="add-step-btn" onclick="addStep()">+ Tambah Periode</button>
+      <div id="tenor-warn"></div>
     </div>
 
     <!-- MULTI PELUNASAN AWAL -->
@@ -316,70 +254,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
       </div>
     </div>
 
-    <!-- OPTIMASI PELUNASAN -->
-    <div class="optim-card">
-      <div class="optim-card-hdr">
-        <div class="optim-card-title"><span class="dot"></span>⚡ Optimasi Pelunasan</div>
-        <button class="optim-toggle" id="optim-toggle" onclick="toggleOptim()"></button>
-      </div>
-      <div id="optim-body" class="hidden">
-        <div class="optim-body">
-          <div class="optim-hint">Punya dana ekstra? Temukan strategi terbaik: 1x langsung vs 2x bertahap, dan mode mana yang lebih hemat bunga.</div>
-          <div class="optim-field">
-            <label>Total Dana yang Tersedia</label>
-            <div class="optim-input-wrap">
-              <span class="optim-prefix">Rp</span>
-              <input type="text" inputmode="numeric" id="opt-budget" class="has-prefix" placeholder="100.000.000"
-                oninput="onOptimCurrencyInput(this)" />
-            </div>
-          </div>
-          <div class="optim-field">
-            <label>Penalti Pelunasan Bank</label>
-            <div class="optim-input-wrap">
-              <input type="number" id="opt-penalti" value="1" step="0.1" min="0" max="5" style="padding-right:42px;" />
-              <span class="optim-prefix" style="left:auto;right:14px;">%</span>
-            </div>
-          </div>
-          <div class="optim-field">
-            <label>Bulan Pelunasan ke-1</label>
-            <div class="optim-input-wrap">
-              <input type="number" id="opt-bln1" value="24" min="1" style="padding-right:42px;" />
-              <span class="optim-prefix" style="left:auto;right:14px;">bln</span>
-            </div>
-          </div>
-          <div class="optim-field">
-            <label>Bulan Pelunasan ke-2 <span style="font-size:11px;opacity:0.6">(jika dibagi 2 tahap)</span></label>
-            <div class="optim-input-wrap">
-              <input type="number" id="opt-bln2" value="48" min="1" style="padding-right:42px;" />
-              <span class="optim-prefix" style="left:auto;right:14px;">bln</span>
-            </div>
-          </div>
-          <div class="optim-field">
-            <label>Rasio Bagi 2 Tahap</label>
-            <select id="opt-split">
-              <option value="50-50">50% : 50% (Merata)</option>
-              <option value="60-40">60% : 40%</option>
-              <option value="70-30">70% : 30%</option>
-              <option value="40-60">40% : 60%</option>
-              <option value="30-70">30% : 70%</option>
-            </select>
-          </div>
-          <button class="optim-run-btn" onclick="jalankanOptimasi()">🔍 Temukan Strategi Terbaik</button>
-        </div>
-      </div>
-    </div>
-
     <button class="calc-btn" onclick="hitung()">🔢 Hitung Sekarang</button>
-
-    <!-- OPTIMASI RESULTS -->
-    <div class="optim-results" id="optim-results">
-      <div id="optim-winner-section"></div>
-      <div id="optim-scenario-list"></div>
-      <div class="comparison-table-card" id="optim-comparison-wrap" style="display:none">
-        <div class="psb-header">📊 Tabel Perbandingan Lengkap</div>
-        <div style="overflow-x:auto"><table class="cmp-table" id="optim-cmp-table"></table></div>
-      </div>
-    </div>
 
     <!-- RESULTS -->
     <div class="results" id="results-section">
@@ -438,17 +313,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
       <div class="formula-box">Net Hemat = Σ(Bunga Dihemat) − Σ(Penalti)</div>
     </div>
     <div class="about-card">
-      <h3>⚡ Optimasi Pelunasan (Fitur Baru)</h3>
-      <p>Fitur ini membandingkan semua strategi penggunaan dana ekstra secara otomatis:</p>
-      <ul>
-        <li><b>1x Sekaligus:</b> Seluruh dana dilunaskan di bulan ke-1 yang dipilih.</li>
-        <li><b>2x Bertahap:</b> Dana dibagi dua dengan berbagai rasio dan dilunaskan di dua bulan berbeda.</li>
-        <li>Setiap skenario dihitung untuk <b>Kurangi Tenor</b> dan <b>Kurangi Cicilan</b>.</li>
-        <li>Hasil diranking dari <b>net bunga dihemat terbesar</b> setelah dikurangi penalti.</li>
-      </ul>
-      <div class="formula-box">Net Hemat = Total Bunga Dihemat − Total Penalti<br/>Efisiensi = Net Hemat / Dana yang Digunakan × 100%</div>
-    </div>
-    <div class="about-card">
       <h3>⚠️ Disclaimer</h3>
       <p>Simulasi ini hanya estimasi. Angka aktual dapat berbeda sesuai kebijakan masing-masing bank. Konsultasikan dengan RM bank sebelum keputusan final.</p>
     </div>
@@ -495,14 +359,6 @@ function onCurrencyInput(el, cb) {
   try { el.setSelectionRange(nc, nc); } catch(e) {}
   if (cb) cb();
 }
-function onOptimCurrencyInput(el) {
-  const cfe = el.value.length - (el.selectionStart || 0);
-  const num = parseInt(el.value.replace(/\D/g,'')) || 0;
-  el.value = num > 0 ? num.toLocaleString('id-ID') : '';
-  const nc = Math.max(0, el.value.length - cfe);
-  try { el.setSelectionRange(nc, nc); } catch(e) {}
-}
-
 /* ── NAV ── */
 function showPage(p) {
   $('page-calc').classList.toggle('hidden', p!=='calc');
@@ -539,12 +395,95 @@ function renderSteps() {
       <td><input type="number" value="${s.dur}" min="1"
         onchange="steps[${i}].dur=Math.max(1,parseInt(this.value)||1);renderSteps()"></td>
       <td><input type="number" value="${s.rate}" step="0.1" min="0"
-        onchange="steps[${i}].rate=parseFloat(this.value)||0"></td>
+        onchange="steps[${i}].rate=parseFloat(this.value)||0;validateTenor()"></td>
       <td>${steps.length>1?`<button class="remove-btn" onclick="steps.splice(${i},1);renderSteps()">✕</button>`:''}</td>`;
     tb.appendChild(tr); yr += s.dur;
   });
+  validateTenor();
+  validateAllPelunasan();
 }
 function addStep() { steps.push({dur:5,rate:12.0}); renderSteps(); }
+
+/* ── VALIDATION ── */
+function totalStepDur() { return steps.reduce((a,s) => a + s.dur, 0); }
+
+function validateTenor() {
+  const tenor = parseInt($('s-tenor').value) || 0;
+  const total = totalStepDur();
+  const el = $('tenor-warn');
+  if (!el) return true;
+  if (total === tenor) {
+    el.innerHTML = `<div class="ok-chip">✅ Total periode ${total} thn = tenor ${tenor} thn</div>`;
+    return true;
+  }
+  const diff = total - tenor;
+  const msg = diff > 0
+    ? `Total periode <b>${total} thn</b> melebihi tenor <b>${tenor} thn</b> sebesar <b>${diff} thn</b>. Kurangi durasi salah satu periode.`
+    : `Total periode <b>${total} thn</b> kurang dari tenor <b>${tenor} thn</b> sebesar <b>${Math.abs(diff)} thn</b>. Tambah durasi atau tambah periode.`;
+  el.innerHTML = `<div class="warn-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>${msg}</span></div>`;
+  return false;
+}
+
+function validateAllPelunasan() {
+  if (!pelOn) return true;
+  const tenor = parseInt($('s-tenor').value) || 0;
+  const totalBulan = tenor * 12;
+  const harga = rawVal('s-harga');
+  const dp = rawVal('s-dp');
+  const pokok = harga - dp;
+
+  let hasError = false;
+  pelEvents.forEach(ev => {
+    validateOnePelunasan(ev, totalBulan, pokok);
+    const warnEl = $(`pv-${ev.id}`);
+    if (warnEl && warnEl.innerHTML) hasError = true;
+  });
+  return !hasError;
+}
+
+function validateOnePelunasan(ev, totalBulan, pokok) {
+  const warnEl = $(`pv-${ev.id}`);
+  const cardEl = $(`pc-${ev.id}`);
+  if (!warnEl) return;
+
+  const errors = [];
+  const tenor = parseInt($('s-tenor').value) || 0;
+  const maxBulan = tenor * 12;
+
+  // #2 — Month out of bounds
+  if (ev.bulan < 1 || ev.bulan >= maxBulan) {
+    errors.push(`Bulan pelunasan (${ev.bulan}) harus antara 1–${maxBulan - 1}.`);
+  }
+
+  // Amount zero
+  if (ev.amount <= 0) {
+    errors.push('Jumlah pelunasan harus lebih dari 0.');
+  }
+
+  // #3 — Amount vs outstanding balance (live check using base schedule)
+  if (ev.amount > 0 && ev.bulan >= 1 && ev.bulan < maxBulan && pokok > 0) {
+    const { schedule: baseSched } = buildBaseSchedule(pokok, totalBulan);
+    const row = baseSched.find(r => r.bln === ev.bulan);
+    if (row && ev.amount >= row.sisa) {
+      errors.push(`Jumlah pelunasan (${fmtS(ev.amount)}) melebihi sisa pokok saat itu (${fmtS(row.sisa)}). Maksimal: ${fmtS(row.sisa - 1)}.`);
+    }
+  }
+
+  if (errors.length) {
+    warnEl.innerHTML = errors.map(e => `<div class="pel-warn">⚠️ ${e}</div>`).join('');
+    if (cardEl) cardEl.classList.add('has-error');
+  } else {
+    warnEl.innerHTML = '';
+    if (cardEl) cardEl.classList.remove('has-error');
+  }
+}
+
+// Hook: re-validate tenor when tenor field changes
+document.addEventListener('DOMContentLoaded', () => {
+  $('s-tenor').addEventListener('input', () => { validateTenor(); validateAllPelunasan(); pelEvents.forEach(ev => updateBalanceHint(ev.id)); });
+  $('s-harga').addEventListener('input', () => { validateAllPelunasan(); pelEvents.forEach(ev => updateBalanceHint(ev.id)); });
+  $('s-dp').addEventListener('input', () => { validateAllPelunasan(); pelEvents.forEach(ev => updateBalanceHint(ev.id)); });
+});
 
 /* ── MULTI PELUNASAN ── */
 let pelOn = false, pelEvents = [], pelCtr = 0;
@@ -563,8 +502,11 @@ function removePel(id) { pelEvents = pelEvents.filter(e=>e.id!==id); renderPel()
 function renderPel() {
   const list = $('pel-list'); list.innerHTML = '';
   pelEvents.forEach((ev, idx) => {
+    const tenor = parseInt($('s-tenor').value) || 0;
+    const totalBulan = tenor * 12;
     const div = document.createElement('div');
     div.className = 'pel-event';
+    div.id = `pc-${ev.id}`;
     div.innerHTML = `
       <div class="pel-event-hdr">
         <div class="pel-event-label">
@@ -577,8 +519,8 @@ function renderPel() {
         <div class="field">
           <label>Bulan ke-</label>
           <div class="input-wrap">
-            <input type="number" id="pb-${ev.id}" value="${ev.bulan}" min="1"
-              onchange="pelEvents.find(e=>e.id===${ev.id}).bulan=parseInt(this.value)||1">
+            <input type="number" id="pb-${ev.id}" value="${ev.bulan}" min="1" max="${totalBulan - 1}"
+              onchange="pelEvents.find(e=>e.id===${ev.id}).bulan=parseInt(this.value)||1;updateBalanceHint(${ev.id});validateAllPelunasan()">
             <span class="input-suffix">bln</span>
           </div>
         </div>
@@ -591,11 +533,11 @@ function renderPel() {
           </div>
         </div>
         <div class="field pel-full">
-          <label>Jumlah Pelunasan</label>
+          <label>Jumlah Pelunasan <span id="pb-hint-${ev.id}" style="font-weight:500;color:var(--green-mid);font-size:11px"></span></label>
           <div class="input-wrap">
             <span class="input-prefix">Rp</span>
             <input type="text" inputmode="numeric" id="pa-${ev.id}" class="has-prefix" placeholder="100.000.000"
-              oninput="onCurrencyInput(this);pelEvents.find(e=>e.id===${ev.id}).amount=rawVal('pa-${ev.id}')">
+              oninput="onCurrencyInput(this);pelEvents.find(e=>e.id===${ev.id}).amount=rawVal('pa-${ev.id}');validateAllPelunasan()">
           </div>
         </div>
         <div class="field pel-full">
@@ -605,19 +547,33 @@ function renderPel() {
             <option value="reduce-cicilan">Kurangi Cicilan (tenor tetap)</option>
           </select>
         </div>
-      </div>`;
+      </div>
+      <div id="pv-${ev.id}"></div>`;
     list.appendChild(div);
     setCur(`pa-${ev.id}`, ev.amount);
     if (ev.option==='reduce-cicilan') $(`po-${ev.id}`).value='reduce-cicilan';
   });
+  pelEvents.forEach(ev => updateBalanceHint(ev.id));
+  validateAllPelunasan();
 }
 
-/* ── OPTIMASI ── */
-let optimOn = false;
-function toggleOptim() {
-  optimOn = !optimOn;
-  $('optim-toggle').classList.toggle('on', optimOn);
-  $('optim-body').classList.toggle('hidden', !optimOn);
+function updateBalanceHint(id) {
+  const hintEl = $(`pb-hint-${id}`);
+  if (!hintEl) return;
+  const ev = pelEvents.find(e => e.id === id);
+  if (!ev) return;
+  const harga = rawVal('s-harga');
+  const dp = rawVal('s-dp');
+  const pokok = harga - dp;
+  const tenor = parseInt($('s-tenor').value) || 0;
+  const totalBulan = tenor * 12;
+  if (pokok <= 0 || totalBulan <= 0 || ev.bulan < 1 || ev.bulan >= totalBulan) {
+    hintEl.textContent = '';
+    return;
+  }
+  const { schedule } = buildBaseSchedule(pokok, totalBulan);
+  const row = schedule.find(r => r.bln === ev.bulan);
+  if (row) hintEl.textContent = `· Sisa pokok bln ${ev.bulan}: ${fmtS(row.sisa)}`;
 }
 
 /* ── ANUITAS FORMULA ── */
@@ -747,15 +703,14 @@ function applyOnePelunasan(schedule, ev) {
   const newRows = [];
 
   if (ev.option === 'reduce-tenor') {
-    // Keep cicilan, walk through step periods with correct rates, stop when balance clears.
-    // At each period boundary, recalculate cicilan vs new rate + remaining months.
+    // "Reduce tenor" = keep the SAME monthly cicilan as before pelunasan.
+    // Cicilan does NOT change. Only rate switches at step boundaries,
+    // which changes the bunga/pkok split — loan just finishes sooner.
+    const cicilan = pelRow.cicilan; // fixed — never recalculated
     let s = sisaAfter;
     let m = ev.bulan + 1;
     let currentStepIdx = getStepForMonth(ev.bulan).stepIdx;
     let currentRate    = getStepForMonth(ev.bulan).rate;
-    // How many months remain in the original schedule from this point
-    let origRemaining = schedule.length - idx - 1;
-    let cicilan = anuitas(s, currentRate, origRemaining);
     const maxMonths = schedule.length * 2;
     let count = 0;
 
@@ -764,9 +719,6 @@ function applyOnePelunasan(schedule, ev) {
       if (stepInfo.stepIdx !== currentStepIdx) {
         currentStepIdx = stepInfo.stepIdx;
         currentRate    = stepInfo.rate;
-        // Remaining original months from m onward
-        const remOrig = Math.max(origRemaining - count, 1);
-        cicilan = anuitas(s, currentRate, remOrig);
       }
       const bunga = s * currentRate;
       const pkok  = Math.min(cicilan - bunga, s);
@@ -816,186 +768,6 @@ function applyOnePelunasan(schedule, ev) {
   };
 }
 
-/*
- * Apply a list of pelunasan events sequentially.
- * Returns full metrics.
- */
-function applyPelunasanList(baseSchedule, evList) {
-  let schedule = [...baseSchedule];
-  let totalBungaHemat = 0;
-  let totalPenalti = 0;
-  let totalTenorHemat = 0;
-
-  for (const ev of evList) {
-    const res = applyOnePelunasan(schedule, ev);
-    if (!res.skipped) {
-      schedule = res.schedule;
-      totalBungaHemat += res.bungaHemat;
-      totalPenalti += res.penaltiAmt;
-      totalTenorHemat += res.tenorHemat;
-    }
-  }
-
-  const totalBunga = schedule.reduce((a, r) => a + r.bunga, 0);
-  return {
-    schedule,
-    totalBunga,
-    totalBungaHemat,
-    totalPenalti,
-    totalTenorHemat,
-    netHemat: totalBungaHemat - totalPenalti,
-    tenorEfektif: schedule.length,
-  };
-}
-
-/* ── OPTIMASI ── */
-function getSplitRatios(splitVal) {
-  const map = {'50-50':[0.5,0.5],'60-40':[0.6,0.4],'70-30':[0.7,0.3],'40-60':[0.4,0.6],'30-70':[0.3,0.7]};
-  return map[splitVal] || [0.5,0.5];
-}
-
-function jalankanOptimasi() {
-  const harga = rawVal('s-harga');
-  const dp = rawVal('s-dp');
-  const tenor = parseInt($('s-tenor').value) || 0;
-  const pokok = harga - dp;
-  const totalBulan = tenor * 12;
-  const budget = rawVal('opt-budget');
-  const penaltiPct = parseFloat($('opt-penalti').value) || 1;
-  const bln1 = parseInt($('opt-bln1').value) || 24;
-  const bln2 = parseInt($('opt-bln2').value) || 48;
-  const splitVal = $('opt-split').value;
-
-  if (!budget || budget <= 0) { alert('Masukkan total dana yang tersedia.'); return; }
-
-  const { schedule: baseSchedule } = buildBaseSchedule(pokok, totalBulan);
-  const baseBunga = baseSchedule.reduce((a, r) => a + r.bunga, 0);
-
-  const [r1, r2] = getSplitRatios(splitVal);
-  const amt1 = Math.round(budget * r1);
-  const amt2 = budget - amt1;
-  const splitLabel = splitVal.replace('-', ' : ');
-
-  const scenarios = [
-    {
-      name: `1x di Bln ${bln1} — Kurangi Tenor`,
-      events: [{ bulan: bln1, amount: budget, option: 'reduce-tenor', penalti: penaltiPct }],
-      tag: '1x Sekaligus',
-    },
-    {
-      name: `1x di Bln ${bln1} — Kurangi Cicilan`,
-      events: [{ bulan: bln1, amount: budget, option: 'reduce-cicilan', penalti: penaltiPct }],
-      tag: '1x Sekaligus',
-    },
-    {
-      name: `2x Bertahap (${splitLabel}) — Keduanya Kurangi Tenor`,
-      events: [
-        { bulan: bln1, amount: amt1, option: 'reduce-tenor', penalti: penaltiPct },
-        { bulan: bln2, amount: amt2, option: 'reduce-tenor', penalti: penaltiPct },
-      ],
-      tag: `2x Bertahap (${splitLabel})`,
-    },
-    {
-      name: `2x Bertahap (${splitLabel}) — Keduanya Kurangi Cicilan`,
-      events: [
-        { bulan: bln1, amount: amt1, option: 'reduce-cicilan', penalti: penaltiPct },
-        { bulan: bln2, amount: amt2, option: 'reduce-cicilan', penalti: penaltiPct },
-      ],
-      tag: `2x Bertahap (${splitLabel})`,
-    },
-    {
-      name: `2x Bertahap (${splitLabel}) — Tenor lalu Cicilan`,
-      events: [
-        { bulan: bln1, amount: amt1, option: 'reduce-tenor', penalti: penaltiPct },
-        { bulan: bln2, amount: amt2, option: 'reduce-cicilan', penalti: penaltiPct },
-      ],
-      tag: `2x Bertahap (${splitLabel})`,
-    },
-    {
-      name: `2x Bertahap (${splitLabel}) — Cicilan lalu Tenor`,
-      events: [
-        { bulan: bln1, amount: amt1, option: 'reduce-cicilan', penalti: penaltiPct },
-        { bulan: bln2, amount: amt2, option: 'reduce-tenor', penalti: penaltiPct },
-      ],
-      tag: `2x Bertahap (${splitLabel})`,
-    },
-  ];
-
-  const results = scenarios.map(sc => {
-    const res = applyPelunasanList([...baseSchedule], sc.events);
-    return {
-      ...sc,
-      totalBunga: res.totalBunga,
-      totalBungaHemat: res.totalBungaHemat,
-      totalPenalti: res.totalPenalti,
-      netHemat: res.netHemat,
-      tenorEfektif: res.tenorEfektif,
-      totalTenorHemat: res.totalTenorHemat,
-      efisiensi: res.netHemat / budget * 100,
-    };
-  });
-
-  results.sort((a, b) => b.netHemat - a.netHemat);
-
-  const winner = results[0];
-  $('optim-winner-section').innerHTML = `
-    <div class="optim-winner-banner" style="margin-bottom:14px;">
-      <div class="optim-winner-label">🏆 Strategi Terbaik</div>
-      <div class="optim-winner-title">${winner.name}</div>
-      <div class="optim-winner-sub">Dana: ${fmtS(budget)} · Penalti: ${penaltiPct}%/event</div>
-      <div class="optim-winner-saving">${fmt(Math.max(winner.netHemat, 0))} dihemat</div>
-    </div>`;
-
-  const rankClasses = ['r1','r2','r3','r4','r4','r4'];
-  const rankEmojis = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣'];
-  const scenList = $('optim-scenario-list');
-  scenList.innerHTML = '';
-  results.forEach((sc, i) => {
-    const isBest = i === 0;
-    const isWorst = i === results.length - 1;
-    const div = document.createElement('div');
-    div.className = 'optim-scenario' + (isBest ? ' best' : '') + (isWorst && !isBest ? ' worst' : '');
-    div.innerHTML = `
-      <div class="optim-scenario-hdr">
-        <div class="optim-scenario-name">
-          <span class="optim-rank-badge ${rankClasses[i]}">${rankEmojis[i]} #${i+1}</span>
-          ${sc.name}
-        </div>
-      </div>
-      <div class="optim-stat-row"><span class="lbl">Total Bunga (setelah)</span><span class="val red">${fmtS(sc.totalBunga)}</span></div>
-      <div class="optim-stat-row"><span class="lbl">Bunga Dihemat</span><span class="val green">${fmtS(Math.max(sc.totalBungaHemat, 0))}</span></div>
-      <div class="optim-stat-row"><span class="lbl">Total Penalti</span><span class="val red">${fmt(sc.totalPenalti)}</span></div>
-      <div class="optim-stat-row"><span class="lbl">Tenor Berkurang</span><span class="val gold">${sc.totalTenorHemat > 0 ? sc.totalTenorHemat + ' bulan' : 'Tenor tetap'}</span></div>
-      <div class="optim-stat-row"><span class="lbl">Efisiensi Dana</span><span class="val green">${sc.efisiensi.toFixed(2)}%</span></div>
-      <div class="optim-net-saving">
-        <span class="lbl">💰 Net Penghematan</span>
-        <span class="val">${fmt(Math.max(sc.netHemat, 0))}</span>
-      </div>`;
-    scenList.appendChild(div);
-  });
-
-  const wrap = $('optim-comparison-wrap');
-  wrap.style.display = 'block';
-  $('optim-cmp-table').innerHTML = `
-    <thead><tr>
-      <th>Strategi</th><th>Bunga Dihemat</th><th>Penalti</th><th>Net Hemat</th><th>Tenor Hemat</th>
-    </tr></thead>
-    <tbody>
-      ${results.map((sc, i) => `
-        <tr class="${i === 0 ? 'best-row' : ''}">
-          <td>${rankEmojis[i]} ${sc.tag}</td>
-          <td class="diff-pos">${fmtS(Math.max(sc.totalBungaHemat, 0))}</td>
-          <td class="diff-neg">${fmt(sc.totalPenalti)}</td>
-          <td class="${sc.netHemat > 0 ? 'diff-pos' : 'diff-neg'}">${fmt(Math.max(sc.netHemat, 0))}</td>
-          <td>${sc.totalTenorHemat > 0 ? sc.totalTenorHemat + ' bln' : '—'}</td>
-        </tr>`).join('')}
-    </tbody>`;
-
-  const optRes = $('optim-results');
-  optRes.classList.add('show');
-  setTimeout(() => optRes.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
-}
-
 /* ── HITUNG ── */
 function hitung() {
   const harga = rawVal('s-harga');
@@ -1004,15 +776,82 @@ function hitung() {
   const pokok = harga - dp;
   const totalBulan = tenor * 12;
 
+  // ── Guard: basic inputs ──
+  if (!harga || harga <= 0) { alert('Masukkan harga properti.'); return; }
+  if (!tenor || tenor <= 0) { alert('Masukkan tenor KPR.'); return; }
+  if (pokok <= 0) { alert('Uang muka melebihi harga properti.'); return; }
+
+  // ── Guard: tenor vs step durations ──
+  if (!validateTenor()) {
+    $('tenor-warn').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  // ── Guard: pelunasan events ──
+  if (pelOn) {
+    // Sync values first
+    pelEvents.forEach(ev => {
+      ev.bulan   = parseInt($(`pb-${ev.id}`)?.value) || ev.bulan;
+      ev.amount  = rawVal(`pa-${ev.id}`);
+      ev.penalti = parseFloat($(`pp-${ev.id}`)?.value) || ev.penalti;
+      ev.option  = $(`po-${ev.id}`)?.value || ev.option;
+    });
+
+    // Check month bounds
+    const outOfBounds = pelEvents.filter(ev => ev.bulan < 1 || ev.bulan >= totalBulan);
+    if (outOfBounds.length) {
+      validateAllPelunasan();
+      $(`pc-${outOfBounds[0].id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    // Check duplicate months
+    const months = pelEvents.map(ev => ev.bulan);
+    const dupes = months.filter((m, i) => months.indexOf(m) !== i);
+    if (dupes.length) {
+      alert(`Dua pelunasan di bulan yang sama (${dupes[0]}). Gunakan bulan berbeda.`);
+      return;
+    }
+
+    // Check zero amounts
+    const zeroAmt = pelEvents.filter(ev => ev.amount <= 0);
+    if (zeroAmt.length) {
+      validateAllPelunasan();
+      $(`pc-${zeroAmt[0].id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+  }
+
   const { schedule: baseSchedule, cicilanAwal, periodSummary } = buildBaseSchedule(pokok, totalBulan);
 
-  // Sync pelunasan event data from DOM
-  pelEvents.forEach(ev => {
-    ev.bulan   = parseInt($(`pb-${ev.id}`)?.value) || ev.bulan;
-    ev.amount  = rawVal(`pa-${ev.id}`);
-    ev.penalti = parseFloat($(`pp-${ev.id}`)?.value) || ev.penalti;
-    ev.option  = $(`po-${ev.id}`)?.value || ev.option;
-  });
+  // Sync pelunasan event data from DOM (already done above if pelOn, but do again for non-pelOn path)
+  if (!pelOn) {
+    pelEvents.forEach(ev => {
+      ev.bulan   = parseInt($(`pb-${ev.id}`)?.value) || ev.bulan;
+      ev.amount  = rawVal(`pa-${ev.id}`);
+      ev.penalti = parseFloat($(`pp-${ev.id}`)?.value) || ev.penalti;
+      ev.option  = $(`po-${ev.id}`)?.value || ev.option;
+    });
+  }
+
+  // ── Guard: pelunasan amount vs outstanding balance ──
+  if (pelOn) {
+    let simSchedule = [...baseSchedule];
+    for (const ev of [...pelEvents].sort((a, b) => a.bulan - b.bulan)) {
+      const row = simSchedule.find(r => r.bln === ev.bulan);
+      if (row && ev.amount >= row.sisa) {
+        const warnEl = $(`pv-${ev.id}`);
+        const cardEl = $(`pc-${ev.id}`);
+        if (warnEl) warnEl.innerHTML = `<div class="pel-warn">⚠️ Jumlah pelunasan (${fmtS(ev.amount)}) melebihi atau sama dengan sisa pokok saat itu (${fmtS(row.sisa)}). Kurangi jumlah pelunasan.</div>`;
+        if (cardEl) cardEl.classList.add('has-error');
+        cardEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      // Apply event to simulation for next check
+      const res = applyOnePelunasan(simSchedule, ev);
+      if (!res.skipped) simSchedule = res.schedule;
+    }
+  }
 
   // Sort events by month ascending (apply in chronological order)
   const sortedEvents = pelOn ? [...pelEvents].sort((a, b) => a.bulan - b.bulan) : [];
@@ -1022,16 +861,17 @@ function hitung() {
   const savingsList = [];
 
   for (const ev of sortedEvents) {
-    const beforeSchedule = schedule;
-    const res = applyOnePelunasan(beforeSchedule, ev);
+    const lenBefore = schedule.length;
+    const res = applyOnePelunasan(schedule, ev);
     if (!res.skipped) {
       schedule = res.schedule;
+      const tenorHemat = lenBefore - schedule.length; // positive = shorter
       savingsList.push({
         label: `Pelunasan Bln ke-${ev.bulan}`,
         amount: ev.amount,
         penaltiAmt: res.penaltiAmt,
         bungaHemat: res.bungaHemat,
-        tenorHemat: res.tenorHemat,
+        tenorHemat,
         netHemat: res.bungaHemat - res.penaltiAmt,
         cicilanBaru: res.cicilanBaru,
         sisaAfter: res.sisaAfter,
@@ -1044,15 +884,16 @@ function hitung() {
 
   const totalCicilan = schedule.reduce((a, r) => a + r.cicilan, 0);
   const totalBunga   = schedule.reduce((a, r) => a + r.bunga, 0);
-  const tenorEfektif = schedule.length;
+  const tenorEfektif = schedule.length; // row count = actual months (bln is sequential)
+  const lastBln      = schedule.length > 0 ? schedule[schedule.length - 1].bln : 0;
 
   // ── Result hero ──
   $('res-total').textContent = fmt(totalCicilan);
-  $('res-sub').textContent = `dalam ${tenorEfektif} bulan (${(tenorEfektif/12).toFixed(1)} tahun)`;
+  $('res-sub').textContent = `dalam ${lastBln} bulan (${(lastBln/12).toFixed(1)} tahun)`;
   $('res-pokok').textContent  = fmtS(pokok);
   $('res-bunga').textContent  = fmtS(totalBunga);
   $('res-cicilan').textContent = fmtS(cicilanAwal) + '/bln';
-  $('res-tenor').textContent  = `${tenorEfektif} bln`;
+  $('res-tenor').textContent  = `${lastBln} bln`;
 
   // ── Period summary (base, before pelunasan) ──
   const psb = $('period-summary-box');
@@ -1099,9 +940,13 @@ function hitung() {
 
     savingsList.forEach((s, i) => {
       const opsiLabel = s.option === 'reduce-tenor' ? 'Kurangi Tenor' : 'Kurangi Cicilan';
-      addRow(`#${i+1}`, 'float', `Setelah ${s.label}`,
-        `Bln ${s.blnSetelah}–${s.blnAkhir} · Pokok berkurang ${fmtS(s.amount)} · ${opsiLabel}`,
-        s.cicilanBaru, true);
+      const tenorInfo = s.option === 'reduce-tenor'
+        ? `Selesai Bln ${s.blnAkhir} · hemat ${s.tenorHemat} bln`
+        : `Bln ${s.blnSetelah}–${s.blnAkhir} · cicilan baru`;
+      const meta = `${tenorInfo} · Pokok berkurang ${fmtS(s.amount)} · ${opsiLabel}`;
+      // For reduce-tenor, cicilan stays the same as before pelunasan — show that
+      const displayCicilan = s.option === 'reduce-tenor' ? s.cicilanBaru : s.cicilanBaru;
+      addRow(`#${i+1}`, 'float', `Setelah ${s.label}`, meta, displayCicilan, true);
     });
     apb.style.display = 'block';
   } else {
@@ -1147,30 +992,32 @@ function hitung() {
   }
 
   // ── Schedule table ──
-  // Build a map of bln → period label for separator rows
-  // Use periodSummary from base (for original period boundaries)
-  const periodByBln = {};
-  periodSummary.forEach((p, i) => {
-    periodByBln[p.blnStart] = { ...p, idx: i };
-  });
-
   const tbody = $('schedule-body');
   tbody.innerHTML = '';
-  $('sch-count').textContent = `${schedule.length} bulan`;
+  $('sch-count').textContent = `${lastBln} bulan`;
 
   let lastStepIdx = -1;
+  let pelOccurred = false;
+
   schedule.forEach((r, i) => {
-    // Insert period separator when stepIdx changes
+    if (r.isPelRow) pelOccurred = true;
+
+    // Insert period separator when the interest-rate step changes
     if (r.stepIdx !== undefined && r.stepIdx !== lastStepIdx) {
       lastStepIdx = r.stepIdx;
       const ps = periodSummary[r.stepIdx];
       if (ps) {
         const sep = document.createElement('tr');
         sep.className = 'period-sep';
-        sep.innerHTML = `<td colspan="6">📶 ${ps.label} — ${ps.rate}%/thn — ${fmt(ps.cicilan)}/bln</td>`;
+        // After pelunasan the base cicilan label is stale — just show rate
+        const cicilanLabel = pelOccurred
+          ? `cicilan berubah (lihat kolom ▶)`
+          : `${fmt(ps.cicilan)}/bln`;
+        sep.innerHTML = `<td colspan="6">📶 ${ps.label} — ${ps.rate}%/thn — ${cicilanLabel}</td>`;
         tbody.appendChild(sep);
       }
     }
+
     const tr = document.createElement('tr');
     if (r.isPelRow) tr.classList.add('pel-row');
     if (i === schedule.length - 1) tr.classList.add('last-row');
