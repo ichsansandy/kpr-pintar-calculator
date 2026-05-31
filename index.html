@@ -141,7 +141,10 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
 .period-cicilan { font-size:15px; font-weight:800; color:var(--green-deep); white-space:nowrap; text-align:right; }
 .period-cicilan span { font-size:11px; font-weight:600; color:var(--ink-60); }
 #after-pel-box { background:var(--white); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); margin-bottom:16px; }
-.pel-after-highlight { background: linear-gradient(90deg, rgba(245,200,66,0.08) 0%, rgba(255,255,255,0) 100%); }
+.pel-after-highlight { background: linear-gradient(90deg, rgba(245,200,66,0.13) 0%, rgba(255,255,255,0) 100%); }
+.pel-cicilan-changed { background: rgba(46,204,138,0.10); }
+.schedule-table tr.pel-segment-sep td { background: var(--gold); color: #5a3e00; font-size:11px; font-weight:700; padding:7px 12px; text-align:left; }
+.schedule-table tr.pel-body-row td { background: rgba(255,244,194,0.55); }
 .period-badge.pel { background: var(--red-pale); color: var(--red-warn); }
 .savings-banner { background:var(--gold-light); border:2px solid var(--gold); border-radius:var(--radius); padding:18px 20px; margin-bottom:12px; }
 .savings-banner-title { font-size:13px; font-weight:800; color:#7A5C00; margin-bottom:10px; }
@@ -292,7 +295,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
       </div>
       <div id="pel-body" class="hidden">
         <div class="pel-section-body">
-          <div class="pel-hint">Beberapa bank mengizinkan 2–3 kali pelunasan. Tiap event dihitung berurutan terhadap sisa jadwal sebelumnya.</div>
+          <div class="pel-hint">Beberapa bank mengizinkan 2–3 kali pelunasan. Tiap event dihitung berurutan terhadap sisa jadwal sebelumnya. Setelah pelunasan, cicilan bulanan akan turun (tenor tetap).</div>
           <div class="pel-list" id="pel-list"></div>
           <button class="add-pel-btn" onclick="addPel()">💰 Tambah Event Pelunasan</button>
         </div>
@@ -387,10 +390,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
     <div class="about-card">
       <h3>💰 Multi Pelunasan Awal</h3>
       <p>Beberapa bank mengizinkan 2–3 kali pelunasan di bulan berbeda. Tiap event dihitung berurutan terhadap jadwal yang sudah dimodifikasi event sebelumnya.</p>
-      <ul>
-        <li><b>Kurangi Tenor:</b> Cicilan tetap, selesai lebih cepat.</li>
-        <li><b>Kurangi Cicilan:</b> Tenor tetap, cicilan bulanan turun.</li>
-      </ul>
+      <p>Setelah pelunasan, cicilan bulanan akan turun dengan tenor tetap (Kurangi Cicilan).</p>
       <div class="formula-box">Net Hemat = Σ(Bunga Dihemat) − Σ(Penalti)</div>
     </div>
     <div class="about-card">
@@ -425,10 +425,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
 <script>
 /* ══════════════════════════════════════════════
    BANK PRESETS
-   Rates are estimative — confirm with each bank.
-   Format: { name, emoji, steps: [{dur, rate}] }
-   Steps must sum to at most 30yr; user's tenor
-   may differ — we clamp last step accordingly.
 ══════════════════════════════════════════════ */
 const BANK_PRESETS = [
   {
@@ -499,11 +495,9 @@ function renderPresets() {
 
 function applyPreset(preset) {
   const tenor = parseInt($('s-tenor').value) || 20;
-  // Clone steps and trim/expand last step to match tenor
   let newSteps = preset.steps.map(s => ({ ...s }));
   let total = newSteps.reduce((a, s) => a + s.dur, 0);
 
-  // If preset steps exceed tenor: trim from end
   while (total > tenor && newSteps.length > 1) {
     const diff = total - tenor;
     const last = newSteps[newSteps.length - 1];
@@ -517,7 +511,6 @@ function applyPreset(preset) {
   }
   if (newSteps.length === 0) newSteps = [{ dur: tenor, rate: preset.steps[0].rate }];
 
-  // Adjust last step so total === tenor
   const sum = newSteps.reduce((a, s) => a + s.dur, 0);
   if (sum < tenor) {
     newSteps[newSteps.length - 1].dur += (tenor - sum);
@@ -693,7 +686,7 @@ function togglePel() {
 }
 function addPel() {
   const id = ++pelCtr;
-  pelEvents.push({id, bulan:24, amount:100000000, option:'reduce-tenor', penalti:1});
+  pelEvents.push({id, bulan:24, amount:100000000, penalti:1});
   renderPel();
 }
 function removePel(id) { pelEvents = pelEvents.filter(e=>e.id!==id); renderPel(); }
@@ -735,18 +728,10 @@ function renderPel() {
               oninput="onCurrencyInput(this);pelEvents.find(e=>e.id===${ev.id}).amount=rawVal('pa-${ev.id}');validateAllPelunasan()">
           </div>
         </div>
-        <div class="field pel-full">
-          <label>Opsi Setelah Pelunasan</label>
-          <select id="po-${ev.id}" onchange="pelEvents.find(e=>e.id===${ev.id}).option=this.value">
-            <option value="reduce-tenor">Kurangi Tenor (cicilan tetap)</option>
-            <option value="reduce-cicilan">Kurangi Cicilan (tenor tetap)</option>
-          </select>
-        </div>
       </div>
       <div id="pv-${ev.id}"></div>`;
     list.appendChild(div);
     setCur(`pa-${ev.id}`, ev.amount);
-    if (ev.option==='reduce-cicilan') $(`po-${ev.id}`).value='reduce-cicilan';
   });
   pelEvents.forEach(ev => updateBalanceHint(ev.id));
   validateAllPelunasan();
@@ -793,10 +778,9 @@ function buildBaseSchedule(pokok, totalBulan) {
       bln++;
       const bunga = sisa * r;
       let pkok = cicilan - bunga;
-      // FIX: clamp last payment
       if (pkok > sisa) pkok = sisa;
       sisa = Math.max(sisa - pkok, 0);
-      if (bln === totalBulan) sisa = 0; // hard clamp last row
+      if (bln === totalBulan) sisa = 0;
       schedule.push({ bln, cicilan, pkok, bunga, sisa, stepIdx: i, stepRate: r });
     }
     const y0 = steps.slice(0, i).reduce((a, s) => a + s.dur, 0) + 1;
@@ -822,6 +806,7 @@ function applyOnePelunasan(schedule, ev) {
   }
   const penaltiAmt = ev.amount * (ev.penalti / 100);
   const bungaTanpa = schedule.slice(idx + 1).reduce((a, r) => a + r.bunga, 0);
+
   const stepBoundaries = [];
   let bStart = 1;
   steps.forEach((s, i) => {
@@ -833,44 +818,31 @@ function applyOnePelunasan(schedule, ev) {
     for (const b of stepBoundaries) { if (m >= b.blnStart && m <= b.blnEnd) return b; }
     return stepBoundaries[stepBoundaries.length - 1];
   }
+
   const remainingMonths = schedule.length - idx - 1;
   const newRows = [];
-  if (ev.option === 'reduce-tenor') {
-    const cicilan = pelRow.cicilan;
-    let s = sisaAfter;
-    let m = ev.bulan + 1;
-    let currentStepIdx = getStepForMonth(ev.bulan).stepIdx;
-    let currentRate    = getStepForMonth(ev.bulan).rate;
-    const maxMonths = schedule.length * 2;
-    let count = 0;
-    while (s > 0.01 && count < maxMonths) {
-      const stepInfo = getStepForMonth(m);
-      if (stepInfo.stepIdx !== currentStepIdx) { currentStepIdx = stepInfo.stepIdx; currentRate = stepInfo.rate; }
-      const bunga = s * currentRate;
-      const pkok  = Math.min(cicilan - bunga, s);
-      if (pkok <= 0) break;
-      s = Math.max(s - pkok, 0);
-      if (s < 0.01) s = 0;
-      newRows.push({ bln: m, cicilan, pkok, bunga, sisa: s, stepIdx: currentStepIdx, stepRate: currentRate });
-      m++; count++;
+
+  // Always reduce-cicilan: tenor fixed, recalculate installment
+  let s = sisaAfter;
+  let m = ev.bulan + 1;
+  let currentStepIdx = getStepForMonth(ev.bulan).stepIdx;
+  let currentRate    = getStepForMonth(ev.bulan).rate;
+  let cicilan = anuitas(s, currentRate, remainingMonths);
+  let monthsLeft = remainingMonths;
+  for (let k = 0; k < remainingMonths && s > 0.01; k++, m++, monthsLeft--) {
+    const stepInfo = getStepForMonth(m);
+    if (stepInfo.stepIdx !== currentStepIdx) {
+      currentStepIdx = stepInfo.stepIdx;
+      currentRate = stepInfo.rate;
+      cicilan = anuitas(s, currentRate, monthsLeft);
     }
-  } else {
-    let s = sisaAfter;
-    let m = ev.bulan + 1;
-    let currentStepIdx = getStepForMonth(ev.bulan).stepIdx;
-    let currentRate    = getStepForMonth(ev.bulan).rate;
-    let cicilan = anuitas(s, currentRate, remainingMonths);
-    let monthsLeft = remainingMonths;
-    for (let k = 0; k < remainingMonths && s > 0.01; k++, m++, monthsLeft--) {
-      const stepInfo = getStepForMonth(m);
-      if (stepInfo.stepIdx !== currentStepIdx) { currentStepIdx = stepInfo.stepIdx; currentRate = stepInfo.rate; cicilan = anuitas(s, currentRate, monthsLeft); }
-      const bunga = s * currentRate;
-      const pkok  = Math.min(cicilan - bunga, s);
-      s = Math.max(s - pkok, 0);
-      if (s < 0.01) s = 0;
-      newRows.push({ bln: m, cicilan, pkok, bunga, sisa: s, stepIdx: currentStepIdx, stepRate: currentRate });
-    }
+    const bunga = s * currentRate;
+    const pkok  = Math.min(cicilan - bunga, s);
+    s = Math.max(s - pkok, 0);
+    if (s < 0.01) s = 0;
+    newRows.push({ bln: m, cicilan, pkok, bunga, sisa: s, stepIdx: currentStepIdx, stepRate: currentRate });
   }
+
   const bungaDengan = newRows.reduce((a, r) => a + r.bunga, 0);
   const bungaHemat  = bungaTanpa - bungaDengan;
   const tenorHemat  = (schedule.length - idx - 1) - newRows.length;
@@ -878,7 +850,14 @@ function applyOnePelunasan(schedule, ev) {
   const blnAkhir    = newRows.length > 0 ? newRows[newRows.length - 1].bln : ev.bulan;
   const markedPre   = [...pre];
   markedPre[markedPre.length - 1] = { ...pelRow, isPelRow: true };
-  return { schedule: [...markedPre, ...newRows], bungaHemat, penaltiAmt, tenorHemat, cicilanBaru, sisaAfter, blnAkhir, skipped: false };
+  // Mark every row after pelunasan as post-pel, and flag cicilan change boundaries
+  const markedNew = newRows.map((r, i) => ({
+    ...r,
+    isPostPel: true,
+    pelEventIdx: undefined, // filled by caller
+    cicilanChanged: i === 0 || Math.abs(r.cicilan - newRows[i-1].cicilan) > 1
+  }));
+  return { schedule: [...markedPre, ...markedNew], bungaHemat, penaltiAmt, tenorHemat, cicilanBaru, sisaAfter, blnAkhir, skipped: false };
 }
 
 /* ── CHART ── */
@@ -887,7 +866,6 @@ function renderChart(schedule) {
   const ctx = $('cicilan-chart');
   if (!ctx) return;
 
-  // Downsample: show every N-th point so chart is readable on mobile
   const MAX_PTS = 120;
   const step = Math.max(1, Math.floor(schedule.length / MAX_PTS));
   const sampled = schedule.filter((_, i) => i % step === 0 || i === schedule.length - 1);
@@ -1022,7 +1000,6 @@ function hitung() {
       ev.bulan   = parseInt($(`pb-${ev.id}`)?.value) || ev.bulan;
       ev.amount  = rawVal(`pa-${ev.id}`);
       ev.penalti = parseFloat($(`pp-${ev.id}`)?.value) || ev.penalti;
-      ev.option  = $(`po-${ev.id}`)?.value || ev.option;
     });
     const outOfBounds = pelEvents.filter(ev => ev.bulan < 1 || ev.bulan >= totalBulan);
     if (outOfBounds.length) {
@@ -1043,46 +1020,31 @@ function hitung() {
 
   const { schedule: baseSchedule, cicilanAwal, periodSummary } = buildBaseSchedule(pokok, totalBulan);
 
-  if (!pelOn) {
-    pelEvents.forEach(ev => {
-      ev.bulan   = parseInt($(`pb-${ev.id}`)?.value) || ev.bulan;
-      ev.amount  = rawVal(`pa-${ev.id}`);
-      ev.penalti = parseFloat($(`pp-${ev.id}`)?.value) || ev.penalti;
-      ev.option  = $(`po-${ev.id}`)?.value || ev.option;
-    });
-  }
-
-  if (pelOn) {
-    let simSchedule = [...baseSchedule];
-    for (const ev of [...pelEvents].sort((a,b) => a.bulan - b.bulan)) {
-      const row = simSchedule.find(r => r.bln === ev.bulan);
-      if (row && ev.amount >= row.sisa) {
-        const warnEl = $(`pv-${ev.id}`), cardEl = $(`pc-${ev.id}`);
-        if (warnEl) warnEl.innerHTML = `<div class="pel-warn">⚠️ Jumlah pelunasan (${fmtS(ev.amount)}) melebihi atau sama dengan sisa pokok saat itu (${fmtS(row.sisa)}). Kurangi jumlah pelunasan.</div>`;
-        if (cardEl) cardEl.classList.add('has-error');
-        cardEl?.scrollIntoView({ behavior:'smooth', block:'center' }); return;
-      }
-      const res = applyOnePelunasan(simSchedule, ev);
-      if (!res.skipped) simSchedule = res.schedule;
-    }
-  }
-
   const sortedEvents = pelOn ? [...pelEvents].sort((a,b) => a.bulan - b.bulan) : [];
   let schedule = [...baseSchedule];
   const savingsList = [];
 
   for (const ev of sortedEvents) {
     const lenBefore = schedule.length;
+    const row = schedule.find(r => r.bln === ev.bulan);
+    if (row && ev.amount >= row.sisa) {
+      const warnEl = $(`pv-${ev.id}`), cardEl = $(`pc-${ev.id}`);
+      if (warnEl) warnEl.innerHTML = `<div class="pel-warn">⚠️ Jumlah pelunasan (${fmtS(ev.amount)}) melebihi atau sama dengan sisa pokok saat itu (${fmtS(row.sisa)}). Kurangi jumlah pelunasan.</div>`;
+      if (cardEl) cardEl.classList.add('has-error');
+      cardEl?.scrollIntoView({ behavior:'smooth', block:'center' }); return;
+    }
     const res = applyOnePelunasan(schedule, ev);
     if (!res.skipped) {
-      schedule = res.schedule;
+      // Tag post-pel rows with which event produced them
+      const pelIdx = savingsList.length; // index of the event about to be pushed
+      schedule = res.schedule.map(r => r.isPostPel && r.pelEventIdx === undefined ? { ...r, pelEventIdx: pelIdx } : r);
       const tenorHemat = lenBefore - schedule.length;
       savingsList.push({
         label: `Pelunasan Bln ke-${ev.bulan}`,
         amount: ev.amount, penaltiAmt: res.penaltiAmt, bungaHemat: res.bungaHemat,
         tenorHemat, netHemat: res.bungaHemat - res.penaltiAmt,
         cicilanBaru: res.cicilanBaru, sisaAfter: res.sisaAfter,
-        blnSetelah: ev.bulan + 1, blnAkhir: res.blnAkhir, option: ev.option,
+        blnSetelah: ev.bulan + 1, blnAkhir: res.blnAkhir,
       });
     }
   }
@@ -1127,6 +1089,7 @@ function hitung() {
   const apb = $('after-pel-box');
   if (pelOn && savingsList.length > 0) {
     apb.innerHTML = '<div class="psb-header">💰 Cicilan Per Periode Setelah Pelunasan</div>';
+
     const addRow = (badge, badgeClass, label, meta, cicilan, highlight) => {
       const row = document.createElement('div');
       row.className = 'period-row' + (highlight ? ' pel-after-highlight' : '');
@@ -1138,13 +1101,42 @@ function hitung() {
         <div class="period-cicilan">${fmt(cicilan)}<span>/bln</span></div>`;
       apb.appendChild(row);
     };
+
+    // Row 0: before any pelunasan
     const firstPelBln = savingsList[0].blnSetelah - 1;
-    addRow('AWAL','','Sebelum Pelunasan',`Bln 1–${firstPelBln} · Cicilan bertingkat per periode`,cicilanAwal,false);
-    savingsList.forEach((s,i) => {
-      const opsiLabel = s.option==='reduce-tenor'?'Kurangi Tenor':'Kurangi Cicilan';
-      const tenorInfo = s.option==='reduce-tenor'?`Selesai Bln ${s.blnAkhir} · hemat ${s.tenorHemat} bln`:`Bln ${s.blnSetelah}–${s.blnAkhir} · cicilan baru`;
-      addRow(`#${i+1}`,'float',`Setelah ${s.label}`,`${tenorInfo} · Pokok berkurang ${fmtS(s.amount)} · ${opsiLabel}`,s.cicilanBaru,true);
+    addRow('AWAL', '', 'Sebelum Pelunasan', `Bln 1–${firstPelBln} · cicilan bertingkat per periode`, cicilanAwal, false);
+
+    // For each pelunasan event, find all distinct cicilan segments in post-pel rows
+    savingsList.forEach((s, i) => {
+      // Gather post-pel rows belonging to this event
+      const postRows = schedule.filter(r => r.isPostPel && r.pelEventIdx === i);
+      if (!postRows.length) return;
+
+      // Group into segments where cicilan changes (rate boundary or cicilan recalc)
+      const segments = [];
+      let segStart = postRows[0];
+      let segCicilan = postRows[0].cicilan;
+      postRows.forEach((r, ri) => {
+        if (ri === 0) return;
+        if (Math.abs(r.cicilan - segCicilan) > 1) {
+          segments.push({ blnStart: segStart.bln, blnEnd: postRows[ri-1].bln, cicilan: segCicilan });
+          segStart = r;
+          segCicilan = r.cicilan;
+        }
+      });
+      segments.push({ blnStart: segStart.bln, blnEnd: postRows[postRows.length-1].bln, cicilan: segCicilan });
+
+      segments.forEach((seg, si) => {
+        const isFirst = si === 0;
+        const badge = isFirst ? `#${i+1}` : `↳`;
+        const label = isFirst
+          ? `Setelah Pelunasan ke-${i+1} · Pokok berkurang ${fmtS(s.amount)}`
+          : `Ganti bunga (rate berubah)`;
+        const meta = `Bln ${seg.blnStart}–${seg.blnEnd}`;
+        addRow(badge, 'float', label, meta, seg.cicilan, true);
+      });
     });
+
     apb.style.display = 'block';
   } else {
     apb.style.display = 'none';
@@ -1159,7 +1151,7 @@ function hitung() {
       <div class="savings-banner-title">💰 ${s.label} — ${fmtS(s.amount)}</div>
       <div class="savings-row"><span class="lbl">Penalti dibayar</span><span class="val neg">${fmt(s.penaltiAmt)}</span></div>
       <div class="savings-row"><span class="lbl">Bunga dihemat</span><span class="val pos">${fmt(Math.max(s.bungaHemat,0))}</span></div>
-      <div class="savings-row"><span class="lbl">Tenor berkurang</span><span class="val pos">${s.tenorHemat>0?s.tenorHemat+' bulan':'Tenor tetap'}</span></div>
+      <div class="savings-row"><span class="lbl">Cicilan baru</span><span class="val pos">${fmt(s.cicilanBaru)}/bln</span></div>
       <div class="savings-row savings-divider">
         <span class="lbl" style="font-weight:700;color:var(--ink)">Net Penghematan</span>
         <span class="val pos" style="font-size:15px">${fmt(Math.max(s.netHemat,0))}</span>
@@ -1169,7 +1161,6 @@ function hitung() {
   if (savingsList.length > 1) {
     const totPenalti = savingsList.reduce((a,s)=>a+s.penaltiAmt,0);
     const totBunga   = savingsList.reduce((a,s)=>a+s.bungaHemat,0);
-    const totTenor   = savingsList.reduce((a,s)=>a+s.tenorHemat,0);
     const totNet     = savingsList.reduce((a,s)=>a+s.netHemat,0);
     const d = document.createElement('div');
     d.className = 'savings-banner';
@@ -1178,7 +1169,6 @@ function hitung() {
       <div class="savings-banner-title" style="color:var(--green-deep)">🎉 Total ${savingsList.length} Event Pelunasan</div>
       <div class="savings-row"><span class="lbl">Total penalti</span><span class="val neg">${fmt(totPenalti)}</span></div>
       <div class="savings-row"><span class="lbl">Total bunga dihemat</span><span class="val pos">${fmt(Math.max(totBunga,0))}</span></div>
-      <div class="savings-row"><span class="lbl">Total tenor berkurang</span><span class="val pos">${totTenor>0?totTenor+' bulan':'Tenor tetap'}</span></div>
       <div class="savings-row savings-divider">
         <span class="lbl" style="font-weight:800;color:var(--ink)">Net Hemat Keseluruhan</span>
         <span class="val pos" style="font-size:16px">${fmt(Math.max(totNet,0))}</span>
@@ -1189,22 +1179,47 @@ function hitung() {
   // Schedule table
   const tbody = $('schedule-body'); tbody.innerHTML = '';
   $('sch-count').textContent = `${lastBln} bulan`;
-  let lastStepIdx = -1, pelOccurred = false;
+  let lastStepIdx = -1;
+  let lastCicilan = -1;
+  let lastPelEventIdx = -1;
+
   schedule.forEach((r, i) => {
-    if (r.isPelRow) pelOccurred = true;
-    if (r.stepIdx !== undefined && r.stepIdx !== lastStepIdx) {
+    const isPostPel = !!r.isPostPel;
+    const pelEvIdx  = r.pelEventIdx ?? -1;
+
+    // Period-sep: new rate step (before any pelunasan)
+    if (!isPostPel && r.stepIdx !== undefined && r.stepIdx !== lastStepIdx) {
       lastStepIdx = r.stepIdx;
       const ps = periodSummary[r.stepIdx];
       if (ps) {
         const sep = document.createElement('tr');
         sep.className = 'period-sep';
-        const cicilanLabel = pelOccurred ? 'cicilan berubah (lihat kolom ▶)' : `${fmt(ps.cicilan)}/bln`;
-        sep.innerHTML = `<td colspan="6">📶 ${ps.label} — ${ps.rate}%/thn — ${cicilanLabel}</td>`;
+        sep.innerHTML = `<td colspan="6">📶 ${ps.label} — ${ps.rate}%/thn — ${fmt(ps.cicilan)}/bln</td>`;
         tbody.appendChild(sep);
       }
     }
+
+    // Cicilan-change separator for post-pel rows
+    if (isPostPel) {
+      const cicilanJumped = Math.abs(r.cicilan - lastCicilan) > 1;
+      const newEvent      = pelEvIdx !== lastPelEventIdx;
+
+      if (newEvent || cicilanJumped) {
+        lastPelEventIdx = pelEvIdx;
+        lastCicilan     = r.cicilan;
+        const sep = document.createElement('tr');
+        sep.className = 'pel-segment-sep';
+        const evLabel = newEvent
+          ? `💰 Setelah Pelunasan ke-${pelEvIdx + 1} — cicilan baru: ${fmt(r.cicilan)}/bln`
+          : `↳ Ganti bunga — cicilan baru: ${fmt(r.cicilan)}/bln`;
+        sep.innerHTML = `<td colspan="6">${evLabel}</td>`;
+        tbody.appendChild(sep);
+      }
+    }
+
     const tr = document.createElement('tr');
-    if (r.isPelRow) tr.classList.add('pel-row');
+    if (r.isPelRow)  tr.classList.add('pel-row');
+    if (isPostPel)   tr.classList.add('pel-body-row');
     if (i === schedule.length - 1) tr.classList.add('last-row');
     tr.innerHTML = `
       <td>${r.bln}${r.isPelRow?' 💰':''}</td>
@@ -1214,6 +1229,8 @@ function hitung() {
       <td class="col-bunga">${fmtS(r.bunga)}</td>
       <td>${fmtS(r.sisa)}</td>`;
     tbody.appendChild(tr);
+
+    if (!isPostPel) lastCicilan = r.cicilan;
   });
 
   $('results-section').classList.add('show');
