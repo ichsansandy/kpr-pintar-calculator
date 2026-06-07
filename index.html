@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <title>KPR Pintar — Kalkulator Cicilan Bertingkat</title>
-<meta name="description" content="Kalkulator KPR bertingkat: hitung cicilan fix & floating dengan multi pelunasan awal." />
+<meta name="description" content="Kalkulator KPR bertingkat: hitung cicilan fix & floating dengan multi pelunasan awal dan refinancing." />
 <meta name="theme-color" content="#0B3D2E" />
 <link rel="manifest" href="manifest.json" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -27,8 +27,12 @@
   --red-pale: #FDECEA;
   --blue: #1565C0;
   --blue-pale: #E3F0FF;
+  --blue-mid: #1976D2;
   --purple: #6A0DAD;
   --purple-pale: #F3E8FF;
+  --refi-accent: #1565C0;
+  --refi-pale: #E8F1FF;
+  --refi-border: #90B8F8;
   --radius: 20px;
   --radius-sm: 12px;
   --shadow: 0 4px 24px rgba(11,61,46,0.12);
@@ -111,6 +115,7 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
 .stat-card-value.green { color:var(--green-mid); }
 .stat-card-value.gold { color:#B8860B; }
 .stat-card-value.red { color:var(--red-warn); }
+.stat-card-value.blue { color:var(--blue-mid); }
 
 /* ── CHART ── */
 .chart-card { background:var(--white); border-radius:var(--radius); padding:20px; margin-bottom:16px; box-shadow:var(--shadow); }
@@ -166,14 +171,15 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
 .schedule-table td { padding:9px 12px; text-align:right; border-bottom:1px solid var(--ink-20); color:var(--ink); white-space:nowrap; }
 .schedule-table td:first-child { text-align:center; font-weight:700; color:var(--ink-60); }
 .schedule-table tr.pel-row td { background:var(--gold-light); font-weight:700; }
+.schedule-table tr.refi-row td { background:var(--refi-pale); font-weight:700; color:var(--blue-mid); }
+.schedule-table tr.refi-body-row td { background:rgba(232,241,255,0.55); }
+.schedule-table tr.refi-sep td { background:var(--blue-mid); color:var(--white); font-size:11px; font-weight:700; padding:7px 12px; text-align:left; }
 .schedule-table tr.last-row td { border-bottom:none; font-weight:800; background:var(--green-pale); }
 .schedule-table tr.period-sep td { background:var(--green-deep); color:var(--white); font-size:11px; font-weight:700; padding:7px 12px; text-align:left; }
-/* mobile: hide Pokok & Bunga columns, show only Bln/Rate/Cicilan/Sisa */
+/* mobile: hide Pokok & Bunga columns */
 @media (max-width:420px) {
-  .schedule-table th.col-pkok,
-  .schedule-table td.col-pkok,
-  .schedule-table th.col-bunga,
-  .schedule-table td.col-bunga { display:none; }
+  .schedule-table th.col-pkok, .schedule-table td.col-pkok,
+  .schedule-table th.col-bunga, .schedule-table td.col-bunga { display:none; }
   .schedule-table { min-width:0; }
 }
 
@@ -183,6 +189,62 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
 .preset-btn:hover { border-color:var(--green-mid); background:var(--green-pale); color:var(--green-deep); }
 .preset-btn.active { border-color:var(--green-mid); background:var(--green-pale); color:var(--green-deep); }
 .preset-logo { font-size:15px; }
+
+/* ── REFINANCING CARD ── */
+.refi-card { background:var(--white); border-radius:var(--radius); padding:20px; margin-bottom:16px; box-shadow:var(--shadow); border:2px solid transparent; transition:border-color 0.3s; }
+.refi-card.refi-active { border-color:var(--refi-border); }
+.refi-card-hdr { display:flex; align-items:center; justify-content:space-between; }
+.refi-card-title { font-size:12px; font-weight:700; color:var(--ink-60); text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; gap:8px; }
+.refi-dot { width:8px; height:8px; border-radius:50%; background:var(--blue-mid); display:inline-block; }
+.toggle.refi-on { background:var(--blue-mid); }
+.refi-body { margin-top:16px; }
+.refi-hint { font-size:12px; color:var(--ink-60); margin-bottom:16px; line-height:1.6; background:var(--refi-pale); border-radius:var(--radius-sm); padding:10px 14px; border-left:3px solid var(--refi-border); }
+.refi-section-title { font-size:11px; font-weight:800; color:var(--blue-mid); text-transform:uppercase; letter-spacing:1px; margin:18px 0 12px; display:flex; align-items:center; gap:7px; }
+.refi-section-title::after { content:''; flex:1; height:1.5px; background:var(--refi-border); border-radius:1px; }
+.biaya-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.biaya-grid .field { margin-bottom:0; }
+.biaya-grid .field-full { grid-column:1/-1; }
+.biaya-row-inline { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--ink-20); font-size:12.5px; }
+.biaya-row-inline:last-child { border-bottom:none; }
+.biaya-row-inline .biaya-lbl { color:var(--ink-60); font-weight:600; display:flex; align-items:center; gap:5px; }
+.biaya-row-inline .biaya-val { font-weight:700; color:var(--ink); }
+.refi-total-biaya { background:var(--refi-pale); border-radius:var(--radius-sm); padding:12px 16px; margin-top:12px; display:flex; justify-content:space-between; align-items:center; }
+.refi-total-biaya .lbl { font-size:12px; font-weight:700; color:var(--blue-mid); }
+.refi-total-biaya .val { font-size:16px; font-weight:800; color:var(--blue-mid); }
+
+/* ── REFI RESULT BANNER ── */
+.refi-banner { background:linear-gradient(135deg,var(--blue-mid) 0%,#0D47A1 100%); border-radius:var(--radius); padding:20px; margin-bottom:16px; color:var(--white); position:relative; overflow:hidden; }
+.refi-banner::after { content:''; position:absolute; width:150px; height:150px; background:rgba(255,255,255,0.07); border-radius:50%; bottom:-40px; right:-20px; }
+.refi-banner-title { font-size:11px; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:1px; margin-bottom:14px; }
+.refi-compare { display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center; margin-bottom:14px; }
+.refi-compare-col { display:flex; flex-direction:column; gap:3px; }
+.refi-compare-col.right { text-align:right; }
+.refi-compare-label { font-size:10px; color:rgba(255,255,255,0.6); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+.refi-compare-val { font-size:20px; font-weight:800; color:var(--white); font-family:'DM Serif Display',serif; }
+.refi-compare-arrow { font-size:20px; color:rgba(255,255,255,0.5); text-align:center; }
+.refi-stats { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.refi-stat { background:rgba(255,255,255,0.12); border-radius:10px; padding:10px 12px; }
+.refi-stat-lbl { font-size:10px; color:rgba(255,255,255,0.6); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
+.refi-stat-val { font-size:14px; font-weight:800; color:var(--white); }
+.refi-stat-val.pos { color:#7FFFD4; }
+.refi-stat-val.neg { color:#FF8A80; }
+.refi-breakeven { background:rgba(255,255,255,0.12); border-radius:10px; padding:12px; margin-top:8px; display:flex; justify-content:space-between; align-items:center; }
+.refi-breakeven-lbl { font-size:11px; color:rgba(255,255,255,0.7); font-weight:600; }
+.refi-breakeven-val { font-size:15px; font-weight:800; color:var(--gold); }
+
+/* ── REFI BIAYA BREAKDOWN ── */
+.refi-breakdown-card { background:var(--white); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); margin-bottom:16px; }
+.refi-breakdown-header { background:var(--blue-mid); color:var(--white); padding:13px 16px; font-size:12px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; }
+.refi-breakdown-body { padding:0 16px; }
+.refi-breakdown-row { display:flex; justify-content:space-between; align-items:center; padding:11px 0; border-bottom:1px solid var(--ink-20); font-size:13px; }
+.refi-breakdown-row:last-child { border-bottom:none; }
+.refi-breakdown-lbl { color:var(--ink-60); display:flex; align-items:center; gap:6px; }
+.refi-breakdown-val { font-weight:700; color:var(--ink); }
+.refi-breakdown-val.neg { color:var(--red-warn); }
+.refi-breakdown-val.pos { color:var(--green-mid); }
+.refi-breakdown-total { background:var(--refi-pale); padding:13px 16px; display:flex; justify-content:space-between; align-items:center; border-top:2px solid var(--refi-border); }
+.refi-breakdown-total .lbl { font-size:13px; font-weight:800; color:var(--blue-mid); }
+.refi-breakdown-total .val { font-size:16px; font-weight:800; color:var(--blue-mid); }
 
 /* bottom nav */
 .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:var(--white); border-top:1px solid var(--ink-20); display:flex; z-index:200; }
@@ -210,6 +272,9 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
   .pel-grid { grid-template-columns:1fr; }
   .pel-full { grid-column:unset; }
   .action-row { flex-direction:column; }
+  .biaya-grid { grid-template-columns:1fr; }
+  .refi-compare { grid-template-columns:1fr auto 1fr; gap:4px; }
+  .refi-compare-val { font-size:15px; }
 }
 </style>
 </head>
@@ -222,9 +287,9 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
 
 <div id="page-calc">
   <div class="hero">
-    <div class="hero-label">Bunga Bertingkat</div>
+    <div class="hero-label">Bunga Bertingkat + Refinancing</div>
     <div class="hero-title">Simulasi KPR<br/>Fix + Floating</div>
-    <div class="hero-sub">Hitung cicilan per periode, efek multi pelunasan awal, dan total penghematan.</div>
+    <div class="hero-sub">Hitung cicilan per periode, efek multi pelunasan awal, dan simulasi refinancing lengkap.</div>
   </div>
 
   <div class="main">
@@ -263,23 +328,15 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
     <!-- BANK PRESETS + PERIODE BUNGA -->
     <div class="card">
       <div class="card-title"><span class="dot"></span>Periode Suku Bunga Bertingkat</div>
-
-      <!-- Bank preset buttons -->
       <div style="margin-bottom:12px;">
         <label style="display:block;font-size:12px;font-weight:700;color:var(--ink-60);margin-bottom:8px;">🏦 Preset Bank (estimasi 2024)</label>
         <div class="preset-row" id="preset-row"></div>
         <div style="font-size:11px;color:var(--ink-60);margin-top:4px;line-height:1.5;">Angka estimasi — konfirmasi langsung ke bank. Klik preset untuk mengisi otomatis.</div>
       </div>
-
       <div class="info-chip">📋 Total durasi periode harus sama dengan tenor</div>
       <table class="step-table">
         <thead>
-          <tr>
-            <th>Thn ke-</th>
-            <th>Durasi (thn)</th>
-            <th>Bunga (%)</th>
-            <th></th>
-          </tr>
+          <tr><th>Thn ke-</th><th>Durasi (thn)</th><th>Bunga (%)</th><th></th></tr>
         </thead>
         <tbody id="step-tbody"></tbody>
       </table>
@@ -298,6 +355,153 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
           <div class="pel-hint">Beberapa bank mengizinkan 2–3 kali pelunasan. Tiap event dihitung berurutan terhadap sisa jadwal sebelumnya. Setelah pelunasan, cicilan bulanan akan turun (tenor tetap).</div>
           <div class="pel-list" id="pel-list"></div>
           <button class="add-pel-btn" onclick="addPel()">💰 Tambah Event Pelunasan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- REFINANCING -->
+    <div class="refi-card" id="refi-card">
+      <div class="refi-card-hdr">
+        <div class="refi-card-title"><span class="refi-dot"></span>🔄 Simulasi Refinancing</div>
+        <button class="toggle" id="refi-toggle" onclick="toggleRefi()"></button>
+      </div>
+      <div id="refi-body" class="hidden">
+        <div class="refi-body">
+          <div class="refi-hint">
+            Simulasi pindah KPR ke bank lain di bulan tertentu. Semua biaya refinancing diperhitungkan untuk menghitung <b>break-even point</b> dan net penghematan sesungguhnya.
+          </div>
+
+          <!-- Kapan refinancing -->
+          <div class="refi-section-title">⏱ Waktu &amp; Pokok Baru</div>
+          <div class="biaya-grid">
+            <div class="field">
+              <label>Refinancing di Bulan ke-</label>
+              <div class="input-wrap">
+                <input type="number" id="refi-bulan" value="36" min="1"
+                  onchange="updateRefiHints()" />
+                <span class="input-suffix">bln</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Tenor Baru</label>
+              <div class="input-wrap">
+                <input type="number" id="refi-tenor-baru" value="17" min="1" max="35" />
+                <span class="input-suffix">thn</span>
+              </div>
+            </div>
+            <div class="field field-full">
+              <label>Nama Bank Baru <span style="font-weight:500;color:var(--blue-mid);font-size:11px" id="refi-sisa-hint"></span></label>
+              <input type="text" id="refi-bank-nama" placeholder="misal: Bank XYZ, BCA, Mandiri…" style="font-size:14px" />
+            </div>
+          </div>
+
+          <!-- Rate baru -->
+          <div class="refi-section-title">📶 Suku Bunga Bank Baru</div>
+          <div style="font-size:11.5px;color:var(--ink-60);margin-bottom:10px;line-height:1.5;">
+            Isi periode rate bank baru. Total durasi harus = tenor baru.
+          </div>
+          <div class="preset-row" id="refi-preset-row"></div>
+          <table class="step-table">
+            <thead>
+              <tr><th>Thn ke-</th><th>Durasi (thn)</th><th>Bunga (%)</th><th></th></tr>
+            </thead>
+            <tbody id="refi-step-tbody"></tbody>
+          </table>
+          <button class="add-step-btn" onclick="addRefiStep()" style="background:var(--refi-pale);color:var(--blue-mid)">+ Tambah Periode</button>
+          <div id="refi-tenor-warn"></div>
+
+          <!-- BIAYA REFINANCING -->
+          <div class="refi-section-title">💸 Biaya Refinancing</div>
+          <div style="font-size:11.5px;color:var(--ink-60);margin-bottom:14px;line-height:1.6;">
+            Isi biaya yang berlaku. Kosongkan atau isi 0 jika tidak ada.
+          </div>
+
+          <div style="font-size:11px;font-weight:800;color:var(--ink-60);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">🏦 Biaya Bank Lama</div>
+          <div class="biaya-grid" style="margin-bottom:16px;">
+            <div class="field">
+              <label>Penalti Pelunasan (%)</label>
+              <div class="input-wrap">
+                <input type="number" id="biaya-penalti-pct" value="1" step="0.1" min="0" class="has-suffix" oninput="updateBiayaHints()" />
+                <span class="input-suffix">%</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Penalti (Rp flat)</label>
+              <div class="input-wrap">
+                <span class="input-prefix">Rp</span>
+                <input type="text" inputmode="numeric" id="biaya-penalti-flat" class="has-prefix" placeholder="0"
+                  oninput="onCurrencyInput(this, updateBiayaHints)" />
+              </div>
+            </div>
+          </div>
+
+          <div style="font-size:11px;font-weight:800;color:var(--ink-60);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">🏦 Biaya Bank Baru</div>
+          <div class="biaya-grid" style="margin-bottom:16px;">
+            <div class="field">
+              <label>Provisi (%)</label>
+              <div class="input-wrap">
+                <input type="number" id="biaya-provisi" value="1" step="0.1" min="0" class="has-suffix" oninput="updateBiayaHints()" />
+                <span class="input-suffix">%</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Administrasi (Rp)</label>
+              <div class="input-wrap">
+                <span class="input-prefix">Rp</span>
+                <input type="text" inputmode="numeric" id="biaya-admin" class="has-prefix" placeholder="500.000"
+                  oninput="onCurrencyInput(this, updateBiayaHints)" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Appraisal/KJPP (Rp)</label>
+              <div class="input-wrap">
+                <span class="input-prefix">Rp</span>
+                <input type="text" inputmode="numeric" id="biaya-appraisal" class="has-prefix" placeholder="1.500.000"
+                  oninput="onCurrencyInput(this, updateBiayaHints)" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Notaris/PPAT (Rp)</label>
+              <div class="input-wrap">
+                <span class="input-prefix">Rp</span>
+                <input type="text" inputmode="numeric" id="biaya-notaris" class="has-prefix" placeholder="5.000.000"
+                  oninput="onCurrencyInput(this, updateBiayaHints)" />
+              </div>
+            </div>
+          </div>
+
+          <div style="font-size:11px;font-weight:800;color:var(--ink-60);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">🛡 Asuransi &amp; Pajak</div>
+          <div class="biaya-grid" style="margin-bottom:4px;">
+            <div class="field">
+              <label>Asuransi Jiwa (%)</label>
+              <div class="input-wrap">
+                <input type="number" id="biaya-asji" value="0.3" step="0.01" min="0" class="has-suffix" oninput="updateBiayaHints()" />
+                <span class="input-suffix">%</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Asuransi Kebakaran (Rp)</label>
+              <div class="input-wrap">
+                <span class="input-prefix">Rp</span>
+                <input type="text" inputmode="numeric" id="biaya-askeb" class="has-prefix" placeholder="500.000"
+                  oninput="onCurrencyInput(this, updateBiayaHints)" />
+              </div>
+            </div>
+            <div class="field field-full">
+              <label>Biaya Lain-lain (Rp)</label>
+              <div class="input-wrap">
+                <span class="input-prefix">Rp</span>
+                <input type="text" inputmode="numeric" id="biaya-lain" class="has-prefix" placeholder="0"
+                  oninput="onCurrencyInput(this, updateBiayaHints)" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Live total biaya -->
+          <div class="refi-total-biaya" id="refi-biaya-total-box" style="display:none">
+            <div class="lbl">💸 Estimasi Total Biaya Refinancing</div>
+            <div class="val" id="refi-biaya-total-val">—</div>
+          </div>
         </div>
       </div>
     </div>
@@ -330,6 +534,9 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
           Ekspor CSV
         </button>
       </div>
+
+      <!-- REFI RESULT (injected here) -->
+      <div id="refi-result-container"></div>
 
       <!-- CHART -->
       <div class="chart-card">
@@ -394,8 +601,15 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
       <div class="formula-box">Net Hemat = Σ(Bunga Dihemat) − Σ(Penalti)</div>
     </div>
     <div class="about-card">
+      <h3>🔄 Simulasi Refinancing</h3>
+      <p>Refinancing dihitung dengan memotong jadwal KPR lama di bulan tertentu, lalu membuat jadwal baru dengan sisa pokok, bunga baru, dan tenor baru.</p>
+      <p>Semua biaya refinancing dimasukkan untuk menghitung <b>break-even point</b> — bulan ke berapa penghematan cicilan sudah cukup menutup biaya yang dikeluarkan.</p>
+      <div class="formula-box">Break-even = Total Biaya Refi ÷ Selisih Cicilan/bulan<br/>Net Hemat = Bunga Dihemat − Total Biaya Refi</div>
+      <p style="margin-top:10px">Biaya yang dihitung: penalti bank lama, provisi, administrasi, appraisal/KJPP, notaris/PPAT, asuransi jiwa, asuransi kebakaran, dan biaya lain-lain.</p>
+    </div>
+    <div class="about-card">
       <h3>📊 Grafik Pokok vs Bunga</h3>
-      <p>Grafik area bertumpuk menunjukkan komposisi setiap cicilan — hijau untuk angsuran pokok, merah untuk bunga. Di awal KPR, bunga mendominasi. Setelah pelunasan, komposisi bergeser signifikan.</p>
+      <p>Grafik area bertumpuk menunjukkan komposisi setiap cicilan — hijau untuk angsuran pokok, merah untuk bunga. Di awal KPR, bunga mendominasi.</p>
     </div>
     <div class="about-card">
       <h3>⚠️ Disclaimer</h3>
@@ -419,7 +633,6 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
   </button>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
@@ -427,103 +640,68 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:22px;
    BANK PRESETS
 ══════════════════════════════════════════════ */
 const BANK_PRESETS = [
-  {
-    id: 'bca',
-    name: 'BCA',
-    emoji: '🔵',
-    steps: [
-      { dur: 3, rate: 5.25 },
-      { dur: 2, rate: 7.50 },
-      { dur: 25, rate: 11.50 }
-    ]
-  },
-  {
-    id: 'mandiri',
-    name: 'Mandiri',
-    emoji: '🟡',
-    steps: [
-      { dur: 3, rate: 5.00 },
-      { dur: 2, rate: 8.00 },
-      { dur: 25, rate: 11.00 }
-    ]
-  },
-  {
-    id: 'bri',
-    name: 'BRI',
-    emoji: '🔴',
-    steps: [
-      { dur: 2, rate: 6.50 },
-      { dur: 3, rate: 9.00 },
-      { dur: 25, rate: 12.00 }
-    ]
-  },
-  {
-    id: 'btn',
-    name: 'BTN',
-    emoji: '🟠',
-    steps: [
-      { dur: 3, rate: 7.99 },
-      { dur: 27, rate: 13.00 }
-    ]
-  },
-  {
-    id: 'bni',
-    name: 'BNI',
-    emoji: '🟤',
-    steps: [
-      { dur: 3, rate: 5.50 },
-      { dur: 2, rate: 8.50 },
-      { dur: 25, rate: 11.50 }
-    ]
-  }
+  { id:'bca',     name:'BCA',     emoji:'🔵', steps:[{dur:3,rate:5.25},{dur:2,rate:7.50},{dur:25,rate:11.50}] },
+  { id:'mandiri', name:'Mandiri', emoji:'🟡', steps:[{dur:3,rate:5.00},{dur:2,rate:8.00},{dur:25,rate:11.00}] },
+  { id:'bri',     name:'BRI',     emoji:'🔴', steps:[{dur:2,rate:6.50},{dur:3,rate:9.00},{dur:25,rate:12.00}] },
+  { id:'btn',     name:'BTN',     emoji:'🟠', steps:[{dur:3,rate:7.99},{dur:27,rate:13.00}] },
+  { id:'bni',     name:'BNI',     emoji:'🟤', steps:[{dur:3,rate:5.50},{dur:2,rate:8.50},{dur:25,rate:11.50}] }
 ];
 
 let activePreset = null;
+let activeRefiPreset = null;
 
 function renderPresets() {
-  const row = $('preset-row');
-  row.innerHTML = '';
+  const row = $('preset-row'); row.innerHTML = '';
   BANK_PRESETS.forEach(p => {
     const btn = document.createElement('button');
     btn.className = 'preset-btn' + (activePreset === p.id ? ' active' : '');
-    btn.id = `preset-${p.id}`;
     btn.innerHTML = `<span class="preset-logo">${p.emoji}</span>${p.name}`;
-    btn.onclick = () => applyPreset(p);
+    btn.onclick = () => applyPreset(p, false);
     row.appendChild(btn);
   });
 }
 
-function applyPreset(preset) {
-  const tenor = parseInt($('s-tenor').value) || 20;
+function renderRefiPresets() {
+  const row = $('refi-preset-row'); if (!row) return;
+  row.innerHTML = '';
+  BANK_PRESETS.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn' + (activeRefiPreset === p.id ? ' active' : '');
+    btn.style.cssText = 'border-color:var(--refi-border);font-size:11.5px;padding:6px 10px;';
+    btn.innerHTML = `<span class="preset-logo">${p.emoji}</span>${p.name}`;
+    btn.onclick = () => applyPreset(p, true);
+    row.appendChild(btn);
+  });
+}
+
+function applyPreset(preset, isRefi) {
+  const tenorEl = isRefi ? $('refi-tenor-baru') : $('s-tenor');
+  const tenor = parseInt(tenorEl?.value) || 20;
   let newSteps = preset.steps.map(s => ({ ...s }));
-  let total = newSteps.reduce((a, s) => a + s.dur, 0);
-
+  let total = newSteps.reduce((a,s) => a + s.dur, 0);
   while (total > tenor && newSteps.length > 1) {
-    const diff = total - tenor;
-    const last = newSteps[newSteps.length - 1];
-    if (last.dur > diff) {
-      last.dur -= diff;
-      total = tenor;
-    } else {
-      total -= last.dur;
-      newSteps.pop();
-    }
+    const diff = total - tenor, last = newSteps[newSteps.length-1];
+    if (last.dur > diff) { last.dur -= diff; total = tenor; }
+    else { total -= last.dur; newSteps.pop(); }
   }
-  if (newSteps.length === 0) newSteps = [{ dur: tenor, rate: preset.steps[0].rate }];
+  if (!newSteps.length) newSteps = [{dur:tenor,rate:preset.steps[0].rate}];
+  const sum = newSteps.reduce((a,s)=>a+s.dur,0);
+  if (sum < tenor) newSteps[newSteps.length-1].dur += (tenor-sum);
+  else if (sum > tenor) { newSteps[newSteps.length-1].dur -= (sum-tenor); if(newSteps[newSteps.length-1].dur<=0) newSteps.pop(); }
 
-  const sum = newSteps.reduce((a, s) => a + s.dur, 0);
-  if (sum < tenor) {
-    newSteps[newSteps.length - 1].dur += (tenor - sum);
-  } else if (sum > tenor) {
-    newSteps[newSteps.length - 1].dur -= (sum - tenor);
-    if (newSteps[newSteps.length - 1].dur <= 0) newSteps.pop();
+  if (isRefi) {
+    refiSteps = newSteps;
+    activeRefiPreset = preset.id;
+    renderRefiSteps();
+    renderRefiPresets();
+    showToast(`✅ Preset ${preset.name} untuk bank baru`);
+  } else {
+    steps = newSteps;
+    activePreset = preset.id;
+    renderSteps();
+    renderPresets();
+    showToast(`✅ Preset ${preset.name} diterapkan`);
   }
-
-  steps = newSteps;
-  activePreset = preset.id;
-  renderSteps();
-  renderPresets();
-  showToast(`✅ Preset ${preset.name} diterapkan`);
 }
 
 /* ══════════════════════════════════════════════
@@ -537,394 +715,369 @@ const fmtS = n => {
   return fmt(n);
 };
 function rawVal(id) {
-  const el = $(id); if (!el) return 0;
+  const el=$(id); if(!el) return 0;
   return parseFloat(el.value.replace(/\./g,'').replace(',','.')) || 0;
 }
 function setCur(id, num) {
-  const el = $(id); if (!el) return;
+  const el=$(id); if(!el) return;
   el.value = num > 0 ? Math.round(num).toLocaleString('id-ID') : '0';
 }
 function onCurrencyInput(el, cb) {
-  const cfe = el.value.length - (el.selectionStart || 0);
+  const cfe = el.value.length - (el.selectionStart||0);
   const raw = el.value.replace(/\D/g,'');
-  const num = parseInt(raw) || 0;
+  const num = parseInt(raw)||0;
   el.value = num > 0 ? num.toLocaleString('id-ID') : '0';
-  const nc = Math.max(0, el.value.length - cfe);
-  try { el.setSelectionRange(nc, nc); } catch(e) {}
-  if (cb) cb();
+  const nc = Math.max(0, el.value.length-cfe);
+  try { el.setSelectionRange(nc,nc); } catch(e){}
+  if(cb) cb();
 }
 
-/* ── TOAST ── */
-let toastTimer = null;
+let toastTimer=null;
 function showToast(msg) {
-  const t = $('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
 }
-
-/* ── NAV ── */
 function showPage(p) {
-  $('page-calc').classList.toggle('hidden', p!=='calc');
-  $('page-about').classList.toggle('hidden', p!=='about');
-  $('nav-calc').classList.toggle('active', p==='calc');
-  $('nav-about').classList.toggle('active', p==='about');
+  $('page-calc').classList.toggle('hidden',p!=='calc');
+  $('page-about').classList.toggle('hidden',p!=='about');
+  $('nav-calc').classList.toggle('active',p==='calc');
+  $('nav-about').classList.toggle('active',p==='about');
 }
 
 /* ── DP ── */
-function syncDP() {
-  const h = rawVal('s-harga'), pct = +$('s-dp-slider').value||20;
-  setCur('s-dp', Math.round(h*pct/100)); $('s-dp-pct').textContent = pct;
-}
-function syncDPFromInput() {
-  const h = rawVal('s-harga')||1, dp = rawVal('s-dp');
-  const pct = Math.min(Math.max(Math.round(dp/h*100),0),50);
-  $('s-dp-slider').value = pct; $('s-dp-pct').textContent = pct;
-}
-function syncDPFromSlider() {
-  const h = rawVal('s-harga'), pct = $('s-dp-slider').value !== '' ? +$('s-dp-slider').value : 20;
-  setCur('s-dp', Math.round(h*pct/100)); $('s-dp-pct').textContent = pct;
-}
+function syncDP() { const h=rawVal('s-harga'),pct=+$('s-dp-slider').value||20; setCur('s-dp',Math.round(h*pct/100)); $('s-dp-pct').textContent=pct; }
+function syncDPFromInput() { const h=rawVal('s-harga')||1,dp=rawVal('s-dp'),pct=Math.min(Math.max(Math.round(dp/h*100),0),50); $('s-dp-slider').value=pct; $('s-dp-pct').textContent=pct; }
+function syncDPFromSlider() { const h=rawVal('s-harga'),pct=$('s-dp-slider').value!==''?+$('s-dp-slider').value:20; setCur('s-dp',Math.round(h*pct/100)); $('s-dp-pct').textContent=pct; }
 
-/* ── STEP TABLE ── */
+/* ── STEP TABLE (Bank Lama) ── */
 let steps = [{dur:1,rate:5.0},{dur:2,rate:8.5},{dur:17,rate:12.0}];
 function renderSteps() {
-  const tb = $('step-tbody'); tb.innerHTML = '';
-  let yr = 1;
+  const tb=$('step-tbody'); tb.innerHTML='';
+  let yr=1;
   steps.forEach((s,i) => {
-    const end = yr + s.dur - 1;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
+    const end=yr+s.dur-1, tr=document.createElement('tr');
+    tr.innerHTML=`
       <td style="color:var(--ink-60);font-size:11px;white-space:nowrap">${yr}–${end}</td>
       <td><input type="number" value="${s.dur}" min="1"
         onchange="steps[${i}].dur=Math.max(1,parseInt(this.value)||1);activePreset=null;renderSteps();renderPresets()"></td>
       <td><input type="number" value="${s.rate}" step="0.1" min="0"
         onchange="steps[${i}].rate=parseFloat(this.value)||0;activePreset=null;renderPresets();validateTenor()"></td>
       <td>${steps.length>1?`<button class="remove-btn" onclick="steps.splice(${i},1);activePreset=null;renderSteps();renderPresets()">✕</button>`:''}</td>`;
-    tb.appendChild(tr); yr += s.dur;
+    tb.appendChild(tr); yr+=s.dur;
   });
   validateTenor();
   validateAllPelunasan();
 }
 function addStep() { steps.push({dur:5,rate:12.0}); activePreset=null; renderSteps(); renderPresets(); }
 
+/* ── STEP TABLE (Refinancing) ── */
+let refiSteps = [{dur:3,rate:5.5},{dur:2,rate:8.0},{dur:12,rate:11.5}];
+function renderRefiSteps() {
+  const tb=$('refi-step-tbody'); if(!tb) return;
+  tb.innerHTML='';
+  let yr=1;
+  refiSteps.forEach((s,i) => {
+    const end=yr+s.dur-1, tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="color:var(--ink-60);font-size:11px;white-space:nowrap">${yr}–${end}</td>
+      <td><input type="number" value="${s.dur}" min="1"
+        onchange="refiSteps[${i}].dur=Math.max(1,parseInt(this.value)||1);activeRefiPreset=null;renderRefiSteps();renderRefiPresets()"></td>
+      <td><input type="number" value="${s.rate}" step="0.1" min="0"
+        onchange="refiSteps[${i}].rate=parseFloat(this.value)||0;activeRefiPreset=null;renderRefiPresets();validateRefiTenor()"></td>
+      <td>${refiSteps.length>1?`<button class="remove-btn" onclick="refiSteps.splice(${i},1);activeRefiPreset=null;renderRefiSteps();renderRefiPresets()">✕</button>`:''}</td>`;
+    tb.appendChild(tr); yr+=s.dur;
+  });
+  validateRefiTenor();
+}
+function addRefiStep() { refiSteps.push({dur:5,rate:11.0}); activeRefiPreset=null; renderRefiSteps(); renderRefiPresets(); }
+
 /* ── VALIDATION ── */
-function totalStepDur() { return steps.reduce((a,s) => a + s.dur, 0); }
+function totalStepDur() { return steps.reduce((a,s)=>a+s.dur,0); }
+function totalRefiStepDur() { return refiSteps.reduce((a,s)=>a+s.dur,0); }
 
 function validateTenor() {
-  const tenor = parseInt($('s-tenor').value) || 0;
-  const total = totalStepDur();
-  const el = $('tenor-warn');
-  if (!el) return true;
-  if (total === tenor) {
-    el.innerHTML = `<div class="ok-chip">✅ Total periode ${total} thn = tenor ${tenor} thn</div>`;
-    return true;
-  }
-  const diff = total - tenor;
-  const msg = diff > 0
-    ? `Total periode <b>${total} thn</b> melebihi tenor <b>${tenor} thn</b> sebesar <b>${diff} thn</b>. Kurangi durasi salah satu periode.`
-    : `Total periode <b>${total} thn</b> kurang dari tenor <b>${tenor} thn</b> sebesar <b>${Math.abs(diff)} thn</b>. Tambah durasi atau tambah periode.`;
-  el.innerHTML = `<div class="warn-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>${msg}</span></div>`;
+  const tenor=parseInt($('s-tenor').value)||0, total=totalStepDur(), el=$('tenor-warn');
+  if(!el) return true;
+  if(total===tenor) { el.innerHTML=`<div class="ok-chip">✅ Total periode ${total} thn = tenor ${tenor} thn</div>`; return true; }
+  const diff=total-tenor, msg=diff>0
+    ?`Total periode <b>${total} thn</b> melebihi tenor <b>${tenor} thn</b> sebesar <b>${diff} thn</b>.`
+    :`Total periode <b>${total} thn</b> kurang dari tenor <b>${tenor} thn</b> sebesar <b>${Math.abs(diff)} thn</b>.`;
+  el.innerHTML=`<div class="warn-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>${msg}</span></div>`;
+  return false;
+}
+
+function validateRefiTenor() {
+  const tenor=parseInt($('refi-tenor-baru')?.value)||0, total=totalRefiStepDur(), el=$('refi-tenor-warn');
+  if(!el) return true;
+  if(total===tenor) { el.innerHTML=`<div class="ok-chip" style="margin-top:8px">✅ Total periode ${total} thn = tenor baru ${tenor} thn</div>`; return true; }
+  const diff=total-tenor, msg=diff>0
+    ?`Total periode <b>${total} thn</b> melebihi tenor baru <b>${tenor} thn</b>.`
+    :`Total periode <b>${total} thn</b> kurang dari tenor baru <b>${tenor} thn</b>.`;
+  el.innerHTML=`<div class="warn-chip" style="margin-top:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>${msg}</span></div>`;
   return false;
 }
 
 function validateAllPelunasan() {
-  if (!pelOn) return true;
-  const tenor = parseInt($('s-tenor').value) || 0;
-  const totalBulan = tenor * 12;
-  const harga = rawVal('s-harga');
-  const dp = rawVal('s-dp');
-  const pokok = harga - dp;
-  let hasError = false;
-  pelEvents.forEach(ev => {
-    validateOnePelunasan(ev, totalBulan, pokok);
-    const warnEl = $(`pv-${ev.id}`);
-    if (warnEl && warnEl.innerHTML) hasError = true;
-  });
+  if(!pelOn) return true;
+  const tenor=parseInt($('s-tenor').value)||0, totalBulan=tenor*12;
+  const harga=rawVal('s-harga'), dp=rawVal('s-dp'), pokok=harga-dp;
+  let hasError=false;
+  pelEvents.forEach(ev => { validateOnePelunasan(ev,totalBulan,pokok); const w=$(`pv-${ev.id}`); if(w&&w.innerHTML) hasError=true; });
   return !hasError;
 }
 
 function validateOnePelunasan(ev, totalBulan, pokok) {
-  const warnEl = $(`pv-${ev.id}`);
-  const cardEl = $(`pc-${ev.id}`);
-  if (!warnEl) return;
-  const errors = [];
-  const tenor = parseInt($('s-tenor').value) || 0;
-  const maxBulan = tenor * 12;
-  if (ev.bulan < 1 || ev.bulan >= maxBulan) errors.push(`Bulan pelunasan (${ev.bulan}) harus antara 1–${maxBulan - 1}.`);
-  if (ev.amount <= 0) errors.push('Jumlah pelunasan harus lebih dari 0.');
-  if (ev.amount > 0 && ev.bulan >= 1 && ev.bulan < maxBulan && pokok > 0) {
-    const { schedule: baseSched } = buildBaseSchedule(pokok, totalBulan);
-    const row = baseSched.find(r => r.bln === ev.bulan);
-    if (row && ev.amount >= row.sisa) {
-      errors.push(`Jumlah pelunasan (${fmtS(ev.amount)}) melebihi sisa pokok saat itu (${fmtS(row.sisa)}). Maksimal: ${fmtS(row.sisa - 1)}.`);
-    }
+  const warnEl=$(`pv-${ev.id}`), cardEl=$(`pc-${ev.id}`);
+  if(!warnEl) return;
+  const errors=[];
+  const tenor=parseInt($('s-tenor').value)||0, maxBulan=tenor*12;
+  if(ev.bulan<1||ev.bulan>=maxBulan) errors.push(`Bulan pelunasan (${ev.bulan}) harus antara 1–${maxBulan-1}.`);
+  if(ev.amount<=0) errors.push('Jumlah pelunasan harus lebih dari 0.');
+  if(ev.amount>0&&ev.bulan>=1&&ev.bulan<maxBulan&&pokok>0) {
+    const {schedule:baseSched}=buildBaseSchedule(pokok,totalBulan);
+    const row=baseSched.find(r=>r.bln===ev.bulan);
+    if(row&&ev.amount>=row.sisa) errors.push(`Jumlah pelunasan (${fmtS(ev.amount)}) melebihi sisa pokok (${fmtS(row.sisa)}).`);
   }
-  if (errors.length) {
-    warnEl.innerHTML = errors.map(e => `<div class="pel-warn">⚠️ ${e}</div>`).join('');
-    if (cardEl) cardEl.classList.add('has-error');
-  } else {
-    warnEl.innerHTML = '';
-    if (cardEl) cardEl.classList.remove('has-error');
-  }
+  if(errors.length) { warnEl.innerHTML=errors.map(e=>`<div class="pel-warn">⚠️ ${e}</div>`).join(''); if(cardEl) cardEl.classList.add('has-error'); }
+  else { warnEl.innerHTML=''; if(cardEl) cardEl.classList.remove('has-error'); }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  $('s-tenor').addEventListener('input', () => { validateTenor(); validateAllPelunasan(); pelEvents.forEach(ev => updateBalanceHint(ev.id)); });
-  $('s-harga').addEventListener('input', () => { validateAllPelunasan(); pelEvents.forEach(ev => updateBalanceHint(ev.id)); });
-  $('s-dp').addEventListener('input', () => { validateAllPelunasan(); pelEvents.forEach(ev => updateBalanceHint(ev.id)); });
+  $('s-tenor').addEventListener('input', ()=>{ validateTenor(); validateAllPelunasan(); pelEvents.forEach(ev=>updateBalanceHint(ev.id)); });
+  $('s-harga').addEventListener('input', ()=>{ validateAllPelunasan(); pelEvents.forEach(ev=>updateBalanceHint(ev.id)); updateBiayaHints(); });
+  $('s-dp').addEventListener('input', ()=>{ validateAllPelunasan(); pelEvents.forEach(ev=>updateBalanceHint(ev.id)); updateBiayaHints(); });
+  if($('refi-tenor-baru')) $('refi-tenor-baru').addEventListener('input', ()=>{ validateRefiTenor(); updateRefiHints(); });
 });
 
 /* ── MULTI PELUNASAN ── */
-let pelOn = false, pelEvents = [], pelCtr = 0;
+let pelOn=false, pelEvents=[], pelCtr=0;
 function togglePel() {
-  pelOn = !pelOn;
-  $('pel-toggle').classList.toggle('on', pelOn);
-  $('pel-body').classList.toggle('hidden', !pelOn);
-  if (pelOn && pelEvents.length===0) addPel();
+  pelOn=!pelOn;
+  $('pel-toggle').classList.toggle('on',pelOn);
+  $('pel-body').classList.toggle('hidden',!pelOn);
+  if(pelOn&&pelEvents.length===0) addPel();
 }
-function addPel() {
-  const id = ++pelCtr;
-  pelEvents.push({id, bulan:24, amount:100000000, penalti:1});
-  renderPel();
-}
-function removePel(id) { pelEvents = pelEvents.filter(e=>e.id!==id); renderPel(); }
+function addPel() { const id=++pelCtr; pelEvents.push({id,bulan:24,amount:100000000,penalti:1}); renderPel(); }
+function removePel(id) { pelEvents=pelEvents.filter(e=>e.id!==id); renderPel(); }
 function renderPel() {
-  const list = $('pel-list'); list.innerHTML = '';
-  pelEvents.forEach((ev, idx) => {
-    const tenor = parseInt($('s-tenor').value) || 0;
-    const totalBulan = tenor * 12;
-    const div = document.createElement('div');
-    div.className = 'pel-event';
-    div.id = `pc-${ev.id}`;
-    div.innerHTML = `
+  const list=$('pel-list'); list.innerHTML='';
+  pelEvents.forEach((ev,idx) => {
+    const tenor=parseInt($('s-tenor').value)||0, totalBulan=tenor*12;
+    const div=document.createElement('div');
+    div.className='pel-event'; div.id=`pc-${ev.id}`;
+    div.innerHTML=`
       <div class="pel-event-hdr">
         <div class="pel-event-label"><span class="pel-num">${idx+1}</span>Pelunasan ke-${idx+1}</div>
-        ${pelEvents.length>1 ? `<button class="remove-btn" onclick="removePel(${ev.id})">✕ Hapus</button>` : ''}
+        ${pelEvents.length>1?`<button class="remove-btn" onclick="removePel(${ev.id})">✕ Hapus</button>`:''}
       </div>
       <div class="pel-grid">
-        <div class="field">
-          <label>Bulan ke-</label>
+        <div class="field"><label>Bulan ke-</label>
           <div class="input-wrap">
-            <input type="number" id="pb-${ev.id}" value="${ev.bulan}" min="1" max="${totalBulan - 1}"
+            <input type="number" id="pb-${ev.id}" value="${ev.bulan}" min="1" max="${totalBulan-1}"
               onchange="pelEvents.find(e=>e.id===${ev.id}).bulan=parseInt(this.value)||1;updateBalanceHint(${ev.id});validateAllPelunasan()">
             <span class="input-suffix">bln</span>
-          </div>
-        </div>
-        <div class="field">
-          <label>Penalti Bank</label>
+          </div></div>
+        <div class="field"><label>Penalti Bank</label>
           <div class="input-wrap">
             <input type="number" id="pp-${ev.id}" value="${ev.penalti}" step="0.1" min="0" class="has-suffix"
               onchange="pelEvents.find(e=>e.id===${ev.id}).penalti=parseFloat(this.value)||0">
             <span class="input-suffix">%</span>
-          </div>
-        </div>
-        <div class="field pel-full">
-          <label>Jumlah Pelunasan <span id="pb-hint-${ev.id}" style="font-weight:500;color:var(--green-mid);font-size:11px"></span></label>
+          </div></div>
+        <div class="field pel-full"><label>Jumlah Pelunasan <span id="pb-hint-${ev.id}" style="font-weight:500;color:var(--green-mid);font-size:11px"></span></label>
           <div class="input-wrap">
             <span class="input-prefix">Rp</span>
             <input type="text" inputmode="numeric" id="pa-${ev.id}" class="has-prefix" placeholder="100.000.000"
               oninput="onCurrencyInput(this);pelEvents.find(e=>e.id===${ev.id}).amount=rawVal('pa-${ev.id}');validateAllPelunasan()">
-          </div>
-        </div>
+          </div></div>
       </div>
       <div id="pv-${ev.id}"></div>`;
     list.appendChild(div);
-    setCur(`pa-${ev.id}`, ev.amount);
+    setCur(`pa-${ev.id}`,ev.amount);
   });
-  pelEvents.forEach(ev => updateBalanceHint(ev.id));
+  pelEvents.forEach(ev=>updateBalanceHint(ev.id));
   validateAllPelunasan();
 }
 
 function updateBalanceHint(id) {
-  const hintEl = $(`pb-hint-${id}`);
-  if (!hintEl) return;
-  const ev = pelEvents.find(e => e.id === id);
-  if (!ev) return;
-  const harga = rawVal('s-harga'), dp = rawVal('s-dp'), pokok = harga - dp;
-  const tenor = parseInt($('s-tenor').value) || 0, totalBulan = tenor * 12;
-  if (pokok <= 0 || totalBulan <= 0 || ev.bulan < 1 || ev.bulan >= totalBulan) { hintEl.textContent = ''; return; }
-  const { schedule } = buildBaseSchedule(pokok, totalBulan);
-  const row = schedule.find(r => r.bln === ev.bulan);
-  if (row) hintEl.textContent = `· Sisa pokok bln ${ev.bulan}: ${fmtS(row.sisa)}`;
+  const hintEl=$(`pb-hint-${id}`); if(!hintEl) return;
+  const ev=pelEvents.find(e=>e.id===id); if(!ev) return;
+  const harga=rawVal('s-harga'),dp=rawVal('s-dp'),pokok=harga-dp;
+  const tenor=parseInt($('s-tenor').value)||0,totalBulan=tenor*12;
+  if(pokok<=0||totalBulan<=0||ev.bulan<1||ev.bulan>=totalBulan){hintEl.textContent='';return;}
+  const {schedule}=buildBaseSchedule(pokok,totalBulan);
+  const row=schedule.find(r=>r.bln===ev.bulan);
+  if(row) hintEl.textContent=`· Sisa pokok bln ${ev.bulan}: ${fmtS(row.sisa)}`;
 }
 
-/* ── ANUITAS FORMULA ── */
-function anuitas(P, r, n) {
-  if (r === 0) return P / n;
-  return P * r * Math.pow(1+r, n) / (Math.pow(1+r, n) - 1);
+/* ── REFINANCING TOGGLE ── */
+let refiOn = false;
+function toggleRefi() {
+  refiOn = !refiOn;
+  const tog = $('refi-toggle');
+  tog.classList.toggle('on', refiOn);
+  tog.classList.toggle('refi-on', refiOn);
+  $('refi-body').classList.toggle('hidden', !refiOn);
+  $('refi-card').classList.toggle('refi-active', refiOn);
+  if (refiOn) {
+    renderRefiSteps();
+    renderRefiPresets();
+    updateRefiHints();
+    updateBiayaHints();
+  }
+}
+
+/* ── REFI HINTS ── */
+function updateRefiHints() {
+  const hintEl = $('refi-sisa-hint'); if(!hintEl) return;
+  const harga=rawVal('s-harga'), dp=rawVal('s-dp'), pokok=harga-dp;
+  const tenor=parseInt($('s-tenor').value)||0, totalBulan=tenor*12;
+  const bulan=parseInt($('refi-bulan')?.value)||36;
+  if(pokok<=0||totalBulan<=0||bulan<1||bulan>=totalBulan){hintEl.textContent='';return;}
+  const {schedule}=buildBaseSchedule(pokok,totalBulan);
+  const row=schedule.find(r=>r.bln===bulan);
+  if(row) hintEl.textContent=`· Sisa pokok: ${fmtS(row.sisa)}`;
+  updateBiayaHints();
+}
+
+/* ── BIAYA LIVE ESTIMATE ── */
+function getSisaPokokAtBulan(bulan) {
+  const harga=rawVal('s-harga'),dp=rawVal('s-dp'),pokok=harga-dp;
+  const tenor=parseInt($('s-tenor').value)||0,totalBulan=tenor*12;
+  if(pokok<=0||totalBulan<=0||bulan<1||bulan>=totalBulan) return 0;
+  const {schedule}=buildBaseSchedule(pokok,totalBulan);
+  const row=schedule.find(r=>r.bln===bulan);
+  return row ? row.sisa : 0;
+}
+
+function updateBiayaHints() {
+  if(!refiOn) return;
+  const bulan=parseInt($('refi-bulan')?.value)||36;
+  const sisa=getSisaPokokAtBulan(bulan);
+  const penaltiPct=(parseFloat($('biaya-penalti-pct')?.value)||0)/100;
+  const penaltiFlat=rawVal('biaya-penalti-flat');
+  const provisiPct=(parseFloat($('biaya-provisi')?.value)||0)/100;
+  const admin=rawVal('biaya-admin');
+  const appraisal=rawVal('biaya-appraisal');
+  const notaris=rawVal('biaya-notaris');
+  const asjiPct=(parseFloat($('biaya-asji')?.value)||0)/100;
+  const askeb=rawVal('biaya-askeb');
+  const lain=rawVal('biaya-lain');
+  const totalBiaya = (sisa*penaltiPct)+penaltiFlat+(sisa*provisiPct)+admin+appraisal+notaris+(sisa*asjiPct)+askeb+lain;
+  const box=$('refi-biaya-total-box'), val=$('refi-biaya-total-val');
+  if(box&&val) {
+    box.style.display = totalBiaya > 0 ? 'flex' : 'none';
+    if(val) val.textContent = fmt(totalBiaya);
+  }
+}
+
+/* ── ANUITAS ── */
+function anuitas(P,r,n) {
+  if(r===0) return P/n;
+  return P*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1);
 }
 
 /* ── CORE ENGINE ── */
 function buildBaseSchedule(pokok, totalBulan) {
-  const schedule = [];
-  let sisa = pokok;
-  let bln = 0;
-  let cicilanAwal = 0;
-  const periodSummary = [];
-
-  for (let i = 0; i < steps.length && sisa > 0.01 && bln < totalBulan; i++) {
-    const s = steps[i];
-    const r = s.rate / 100 / 12;
-    const remainBulan = totalBulan - bln;
-    const durBulan = Math.min(s.dur * 12, remainBulan);
-    if (durBulan <= 0) break;
-    const cicilan = anuitas(sisa, r, remainBulan);
-    if (i === 0) cicilanAwal = cicilan;
-    const sisaAwal = sisa;
-    const blnStart = bln + 1;
-    for (let m = 0; m < durBulan && sisa > 0.01; m++) {
+  const schedule=[], periodSummary=[];
+  let sisa=pokok, bln=0, cicilanAwal=0;
+  for(let i=0;i<steps.length&&sisa>0.01&&bln<totalBulan;i++) {
+    const s=steps[i], r=s.rate/100/12;
+    const remainBulan=totalBulan-bln, durBulan=Math.min(s.dur*12,remainBulan);
+    if(durBulan<=0) break;
+    const cicilan=anuitas(sisa,r,remainBulan);
+    if(i===0) cicilanAwal=cicilan;
+    const sisaAwal=sisa, blnStart=bln+1;
+    for(let m=0;m<durBulan&&sisa>0.01;m++) {
       bln++;
-      const bunga = sisa * r;
-      let pkok = cicilan - bunga;
-      if (pkok > sisa) pkok = sisa;
-      sisa = Math.max(sisa - pkok, 0);
-      if (bln === totalBulan) sisa = 0;
-      schedule.push({ bln, cicilan, pkok, bunga, sisa, stepIdx: i, stepRate: r });
+      const bunga=sisa*r; let pkok=cicilan-bunga; if(pkok>sisa) pkok=sisa;
+      sisa=Math.max(sisa-pkok,0); if(bln===totalBulan) sisa=0;
+      schedule.push({bln,cicilan,pkok,bunga,sisa,stepIdx:i,stepRate:r});
     }
-    const y0 = steps.slice(0, i).reduce((a, s) => a + s.dur, 0) + 1;
-    periodSummary.push({
-      label: `Periode ${i+1} (Thn ${y0}–${y0 + s.dur - 1})`,
-      isFloat: i > 0, rate: s.rate, cicilan, blnStart, blnEnd: bln, sisaAwal,
-    });
+    const y0=steps.slice(0,i).reduce((a,s)=>a+s.dur,0)+1;
+    periodSummary.push({label:`Periode ${i+1} (Thn ${y0}–${y0+s.dur-1})`,isFloat:i>0,rate:s.rate,cicilan,blnStart,blnEnd:bln,sisaAwal});
   }
-  return { schedule, cicilanAwal, periodSummary };
+  return {schedule,cicilanAwal,periodSummary};
+}
+
+function buildRefiSchedule(sisaPokok, refiTenorBulan) {
+  const schedule=[];
+  let sisa=sisaPokok, bln=0;
+  let cicilanAwal=0;
+  const periodSummary=[];
+  for(let i=0;i<refiSteps.length&&sisa>0.01&&bln<refiTenorBulan;i++) {
+    const s=refiSteps[i], r=s.rate/100/12;
+    const remainBulan=refiTenorBulan-bln, durBulan=Math.min(s.dur*12,remainBulan);
+    if(durBulan<=0) break;
+    const cicilan=anuitas(sisa,r,remainBulan);
+    if(i===0) cicilanAwal=cicilan;
+    const sisaAwal=sisa, blnStart=bln+1;
+    for(let m=0;m<durBulan&&sisa>0.01;m++) {
+      bln++;
+      const bunga=sisa*r; let pkok=cicilan-bunga; if(pkok>sisa) pkok=sisa;
+      sisa=Math.max(sisa-pkok,0); if(bln===refiTenorBulan) sisa=0;
+      schedule.push({bln,cicilan,pkok,bunga,sisa,stepIdx:i,stepRate:r});
+    }
+    const y0=refiSteps.slice(0,i).reduce((a,s)=>a+s.dur,0)+1;
+    periodSummary.push({label:`Periode ${i+1} (Thn ${y0}–${y0+s.dur-1})`,isFloat:i>0,rate:s.rate,cicilan,blnStart,blnEnd:bln,sisaAwal});
+  }
+  return {schedule,cicilanAwal,periodSummary};
 }
 
 function applyOnePelunasan(schedule, ev) {
-  const idx = schedule.findIndex(r => r.bln === ev.bulan);
-  if (idx < 0 || idx >= schedule.length - 1) {
-    return { schedule, bungaHemat:0, penaltiAmt:0, tenorHemat:0, cicilanBaru:0, sisaAfter:0, skipped:true };
+  const idx=schedule.findIndex(r=>r.bln===ev.bulan);
+  if(idx<0||idx>=schedule.length-1) return {schedule,bungaHemat:0,penaltiAmt:0,tenorHemat:0,cicilanBaru:0,sisaAfter:0,skipped:true};
+  const pre=schedule.slice(0,idx+1);
+  const pelRow=pre[pre.length-1];
+  const sisaAfter=pelRow.sisa-ev.amount;
+  if(sisaAfter<=0.01) return {schedule,bungaHemat:0,penaltiAmt:0,tenorHemat:0,cicilanBaru:0,sisaAfter:0,skipped:true};
+  const penaltiAmt=ev.amount*(ev.penalti/100);
+  const bungaTanpa=schedule.slice(idx+1).reduce((a,r)=>a+r.bunga,0);
+  const stepBoundaries=[]; let bStart=1;
+  steps.forEach((s,i) => { const blnEnd=bStart+s.dur*12-1; stepBoundaries.push({blnStart:bStart,blnEnd,rate:s.rate/100/12,stepIdx:i}); bStart=blnEnd+1; });
+  function getStepForMonth(m) { for(const b of stepBoundaries){if(m>=b.blnStart&&m<=b.blnEnd)return b;} return stepBoundaries[stepBoundaries.length-1]; }
+  const remainingMonths=schedule.length-idx-1;
+  const newRows=[];
+  let s=sisaAfter, m=ev.bulan+1;
+  let currentStepIdx=getStepForMonth(ev.bulan).stepIdx, currentRate=getStepForMonth(ev.bulan).rate;
+  let cicilan=anuitas(s,currentRate,remainingMonths), monthsLeft=remainingMonths;
+  for(let k=0;k<remainingMonths&&s>0.01;k++,m++,monthsLeft--) {
+    const stepInfo=getStepForMonth(m);
+    if(stepInfo.stepIdx!==currentStepIdx){currentStepIdx=stepInfo.stepIdx;currentRate=stepInfo.rate;cicilan=anuitas(s,currentRate,monthsLeft);}
+    const bunga=s*currentRate, pkok=Math.min(cicilan-bunga,s);
+    s=Math.max(s-pkok,0); if(s<0.01) s=0;
+    newRows.push({bln:m,cicilan,pkok,bunga,sisa:s,stepIdx:currentStepIdx,stepRate:currentRate});
   }
-  const pre = schedule.slice(0, idx + 1);
-  const pelRow = pre[pre.length - 1];
-  const sisaBefore = pelRow.sisa;
-  const sisaAfter = sisaBefore - ev.amount;
-  if (sisaAfter <= 0.01) {
-    return { schedule, bungaHemat:0, penaltiAmt:0, tenorHemat:0, cicilanBaru:0, sisaAfter:0, skipped:true };
-  }
-  const penaltiAmt = ev.amount * (ev.penalti / 100);
-  const bungaTanpa = schedule.slice(idx + 1).reduce((a, r) => a + r.bunga, 0);
-
-  const stepBoundaries = [];
-  let bStart = 1;
-  steps.forEach((s, i) => {
-    const blnEnd = bStart + s.dur * 12 - 1;
-    stepBoundaries.push({ blnStart: bStart, blnEnd, rate: s.rate / 100 / 12, stepIdx: i });
-    bStart = blnEnd + 1;
-  });
-  function getStepForMonth(m) {
-    for (const b of stepBoundaries) { if (m >= b.blnStart && m <= b.blnEnd) return b; }
-    return stepBoundaries[stepBoundaries.length - 1];
-  }
-
-  const remainingMonths = schedule.length - idx - 1;
-  const newRows = [];
-
-  // Always reduce-cicilan: tenor fixed, recalculate installment
-  let s = sisaAfter;
-  let m = ev.bulan + 1;
-  let currentStepIdx = getStepForMonth(ev.bulan).stepIdx;
-  let currentRate    = getStepForMonth(ev.bulan).rate;
-  let cicilan = anuitas(s, currentRate, remainingMonths);
-  let monthsLeft = remainingMonths;
-  for (let k = 0; k < remainingMonths && s > 0.01; k++, m++, monthsLeft--) {
-    const stepInfo = getStepForMonth(m);
-    if (stepInfo.stepIdx !== currentStepIdx) {
-      currentStepIdx = stepInfo.stepIdx;
-      currentRate = stepInfo.rate;
-      cicilan = anuitas(s, currentRate, monthsLeft);
-    }
-    const bunga = s * currentRate;
-    const pkok  = Math.min(cicilan - bunga, s);
-    s = Math.max(s - pkok, 0);
-    if (s < 0.01) s = 0;
-    newRows.push({ bln: m, cicilan, pkok, bunga, sisa: s, stepIdx: currentStepIdx, stepRate: currentRate });
-  }
-
-  const bungaDengan = newRows.reduce((a, r) => a + r.bunga, 0);
-  const bungaHemat  = bungaTanpa - bungaDengan;
-  const tenorHemat  = (schedule.length - idx - 1) - newRows.length;
-  const cicilanBaru = newRows.length > 0 ? newRows[0].cicilan : 0;
-  const blnAkhir    = newRows.length > 0 ? newRows[newRows.length - 1].bln : ev.bulan;
-  const markedPre   = [...pre];
-  markedPre[markedPre.length - 1] = { ...pelRow, isPelRow: true };
-  // Mark every row after pelunasan as post-pel, and flag cicilan change boundaries
-  const markedNew = newRows.map((r, i) => ({
-    ...r,
-    isPostPel: true,
-    pelEventIdx: undefined, // filled by caller
-    cicilanChanged: i === 0 || Math.abs(r.cicilan - newRows[i-1].cicilan) > 1
-  }));
-  return { schedule: [...markedPre, ...markedNew], bungaHemat, penaltiAmt, tenorHemat, cicilanBaru, sisaAfter, blnAkhir, skipped: false };
+  const bungaDengan=newRows.reduce((a,r)=>a+r.bunga,0);
+  const bungaHemat=bungaTanpa-bungaDengan;
+  const tenorHemat=(schedule.length-idx-1)-newRows.length;
+  const cicilanBaru=newRows.length>0?newRows[0].cicilan:0;
+  const blnAkhir=newRows.length>0?newRows[newRows.length-1].bln:ev.bulan;
+  const markedPre=[...pre]; markedPre[markedPre.length-1]={...pelRow,isPelRow:true};
+  const markedNew=newRows.map((r,i)=>({...r,isPostPel:true,pelEventIdx:undefined,cicilanChanged:i===0||Math.abs(r.cicilan-newRows[i-1].cicilan)>1}));
+  return {schedule:[...markedPre,...markedNew],bungaHemat,penaltiAmt,tenorHemat,cicilanBaru,sisaAfter,blnAkhir,skipped:false};
 }
 
 /* ── CHART ── */
-let cicilanChart = null;
+let cicilanChart=null;
 function renderChart(schedule) {
-  const ctx = $('cicilan-chart');
-  if (!ctx) return;
-
-  const MAX_PTS = 120;
-  const step = Math.max(1, Math.floor(schedule.length / MAX_PTS));
-  const sampled = schedule.filter((_, i) => i % step === 0 || i === schedule.length - 1);
-
-  const labels  = sampled.map(r => `Bln ${r.bln}`);
-  const pokokDs = sampled.map(r => Math.round(r.pkok));
-  const bungaDs = sampled.map(r => Math.round(r.bunga));
-
-  if (cicilanChart) cicilanChart.destroy();
-  cicilanChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Pokok',
-          data: pokokDs,
-          backgroundColor: 'rgba(26,107,74,0.85)',
-          borderWidth: 0,
-          stack: 'cicilan'
-        },
-        {
-          label: 'Bunga',
-          data: bungaDs,
-          backgroundColor: 'rgba(229,57,53,0.75)',
-          borderWidth: 0,
-          stack: 'cicilan'
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 500 },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            title: items => items[0].label,
-            label: item => ` ${item.dataset.label}: ${fmtS(item.raw)}`
-          }
-        }
-      },
-      scales: {
-        x: {
-          stacked: true,
-          ticks: { maxTicksLimit: 8, font: { size: 10, family: "'Plus Jakarta Sans',sans-serif" }, color: 'rgba(13,27,18,0.5)' },
-          grid: { display: false }
-        },
-        y: {
-          stacked: true,
-          ticks: {
-            maxTicksLimit: 5,
-            font: { size: 10, family: "'Plus Jakarta Sans',sans-serif" },
-            color: 'rgba(13,27,18,0.5)',
-            callback: v => fmtS(v)
-          },
-          grid: { color: 'rgba(13,27,18,0.06)' }
-        }
+  const ctx=$('cicilan-chart'); if(!ctx) return;
+  const MAX_PTS=120, step=Math.max(1,Math.floor(schedule.length/MAX_PTS));
+  const sampled=schedule.filter((_,i)=>i%step===0||i===schedule.length-1);
+  const labels=sampled.map(r=>`Bln ${r.bln}`);
+  const pokokDs=sampled.map(r=>Math.round(r.pkok));
+  const bungaDs=sampled.map(r=>Math.round(r.bunga));
+  if(cicilanChart) cicilanChart.destroy();
+  cicilanChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Pokok',data:pokokDs,backgroundColor:'rgba(26,107,74,0.85)',borderWidth:0,stack:'cicilan'},
+      {label:'Bunga',data:bungaDs,backgroundColor:'rgba(229,57,53,0.75)',borderWidth:0,stack:'cicilan'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:500},
+      plugins:{legend:{display:false},tooltip:{callbacks:{title:i=>i[0].label,label:i=>` ${i.dataset.label}: ${fmtS(i.raw)}`}}},
+      scales:{
+        x:{stacked:true,ticks:{maxTicksLimit:8,font:{size:10,family:"'Plus Jakarta Sans',sans-serif"},color:'rgba(13,27,18,0.5)'},grid:{display:false}},
+        y:{stacked:true,ticks:{maxTicksLimit:5,font:{size:10,family:"'Plus Jakarta Sans',sans-serif"},color:'rgba(13,27,18,0.5)',callback:v=>fmtS(v)},grid:{color:'rgba(13,27,18,0.06)'}}
       }
     }
   });
@@ -932,321 +1085,394 @@ function renderChart(schedule) {
 
 /* ── SHARE URL ── */
 function shareURL() {
-  const params = {
-    harga: rawVal('s-harga'),
-    dp: rawVal('s-dp'),
-    tenor: $('s-tenor').value,
-    steps: JSON.stringify(steps)
-  };
-  const hash = btoa(JSON.stringify(params));
-  const url = location.href.split('#')[0] + '#' + hash;
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(url).then(() => showToast('🔗 Link disalin ke clipboard!'));
-  } else {
-    prompt('Salin link berikut:', url);
-  }
+  const params={harga:rawVal('s-harga'),dp:rawVal('s-dp'),tenor:$('s-tenor').value,steps:JSON.stringify(steps)};
+  const hash=btoa(JSON.stringify(params));
+  const url=location.href.split('#')[0]+'#'+hash;
+  if(navigator.clipboard) navigator.clipboard.writeText(url).then(()=>showToast('🔗 Link disalin ke clipboard!'));
+  else prompt('Salin link berikut:',url);
 }
-
 function loadFromHash() {
-  const hash = location.hash.slice(1);
-  if (!hash) return;
+  const hash=location.hash.slice(1); if(!hash) return;
   try {
-    const params = JSON.parse(atob(hash));
-    if (params.harga) setCur('s-harga', params.harga);
-    if (params.dp)    setCur('s-dp', params.dp);
-    if (params.tenor) $('s-tenor').value = params.tenor;
-    if (params.steps) { steps = JSON.parse(params.steps); renderSteps(); }
+    const params=JSON.parse(atob(hash));
+    if(params.harga) setCur('s-harga',params.harga);
+    if(params.dp)    setCur('s-dp',params.dp);
+    if(params.tenor) $('s-tenor').value=params.tenor;
+    if(params.steps) { steps=JSON.parse(params.steps); renderSteps(); }
     syncDPFromInput();
-  } catch(e) { /* ignore bad hash */ }
+  } catch(e){}
 }
 
 /* ── EXPORT CSV ── */
-let _lastSchedule = [];
+let _lastSchedule=[];
 function exportCSV() {
-  if (!_lastSchedule.length) { showToast('⚠️ Hitung dulu sebelum ekspor'); return; }
-  const rows = [['Bulan','Rate (%/thn)','Cicilan (Rp)','Pokok (Rp)','Bunga (Rp)','Sisa (Rp)','Ket']];
-  _lastSchedule.forEach(r => {
-    rows.push([
-      r.bln,
-      ((r.stepRate||0)*12*100).toFixed(2),
-      Math.round(r.cicilan),
-      Math.round(r.pkok),
-      Math.round(r.bunga),
-      Math.round(r.sisa),
-      r.isPelRow ? 'Pelunasan' : ''
+  if(!_lastSchedule.length){showToast('⚠️ Hitung dulu sebelum ekspor');return;}
+  const rows=[['Bulan','Rate (%/thn)','Cicilan (Rp)','Pokok (Rp)','Bunga (Rp)','Sisa (Rp)','Ket']];
+  _lastSchedule.forEach(r=>{
+    rows.push([r.bln,((r.stepRate||0)*12*100).toFixed(2),Math.round(r.cicilan),Math.round(r.pkok),Math.round(r.bunga),Math.round(r.sisa),
+      r.isPelRow?'Pelunasan':r.isRefiRow?'Refinancing':r.isPostRefi?'Post-Refi':''
     ]);
   });
-  const csv = rows.map(r => r.join(',')).join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = 'jadwal-kpr.csv'; a.click();
-  URL.revokeObjectURL(url);
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=url; a.download='jadwal-kpr.csv'; a.click(); URL.revokeObjectURL(url);
   showToast('📥 File CSV diunduh');
 }
 
-/* ── HITUNG ── */
+/* ══════════════════════════════════════════════
+   HITUNG UTAMA
+══════════════════════════════════════════════ */
 function hitung() {
-  const harga = rawVal('s-harga'), dp = rawVal('s-dp');
-  const tenor = parseInt($('s-tenor').value) || 0;
-  const pokok = harga - dp, totalBulan = tenor * 12;
-  if (!harga || harga <= 0) { alert('Masukkan harga properti.'); return; }
-  if (!tenor || tenor <= 0) { alert('Masukkan tenor KPR.'); return; }
-  if (pokok <= 0) { alert('Uang muka melebihi harga properti.'); return; }
-  if (!validateTenor()) { $('tenor-warn').scrollIntoView({ behavior:'smooth', block:'center' }); return; }
+  const harga=rawVal('s-harga'), dp=rawVal('s-dp');
+  const tenor=parseInt($('s-tenor').value)||0;
+  const pokok=harga-dp, totalBulan=tenor*12;
+  if(!harga||harga<=0){alert('Masukkan harga properti.');return;}
+  if(!tenor||tenor<=0){alert('Masukkan tenor KPR.');return;}
+  if(pokok<=0){alert('Uang muka melebihi harga properti.');return;}
+  if(!validateTenor()){$('tenor-warn').scrollIntoView({behavior:'smooth',block:'center'});return;}
 
-  if (pelOn) {
-    pelEvents.forEach(ev => {
-      ev.bulan   = parseInt($(`pb-${ev.id}`)?.value) || ev.bulan;
-      ev.amount  = rawVal(`pa-${ev.id}`);
-      ev.penalti = parseFloat($(`pp-${ev.id}`)?.value) || ev.penalti;
+  if(refiOn&&!validateRefiTenor()){$('refi-tenor-warn').scrollIntoView({behavior:'smooth',block:'center'});return;}
+
+  if(pelOn) {
+    pelEvents.forEach(ev=>{
+      ev.bulan=parseInt($(`pb-${ev.id}`)?.value)||ev.bulan;
+      ev.amount=rawVal(`pa-${ev.id}`);
+      ev.penalti=parseFloat($(`pp-${ev.id}`)?.value)||ev.penalti;
     });
-    const outOfBounds = pelEvents.filter(ev => ev.bulan < 1 || ev.bulan >= totalBulan);
-    if (outOfBounds.length) {
-      validateAllPelunasan();
-      $(`pc-${outOfBounds[0].id}`)?.scrollIntoView({ behavior:'smooth', block:'center' });
-      return;
+    const outOfBounds=pelEvents.filter(ev=>ev.bulan<1||ev.bulan>=totalBulan);
+    if(outOfBounds.length){validateAllPelunasan();$(`pc-${outOfBounds[0].id}`)?.scrollIntoView({behavior:'smooth',block:'center'});return;}
+    const months=pelEvents.map(ev=>ev.bulan), dupes=months.filter((m,i)=>months.indexOf(m)!==i);
+    if(dupes.length){alert(`Dua pelunasan di bulan yang sama (${dupes[0]}).`);return;}
+    const zeroAmt=pelEvents.filter(ev=>ev.amount<=0);
+    if(zeroAmt.length){validateAllPelunasan();$(`pc-${zeroAmt[0].id}`)?.scrollIntoView({behavior:'smooth',block:'center'});return;}
+  }
+
+  const {schedule:baseSchedule,cicilanAwal,periodSummary}=buildBaseSchedule(pokok,totalBulan);
+  const sortedEvents=pelOn?[...pelEvents].sort((a,b)=>a.bulan-b.bulan):[];
+  let schedule=[...baseSchedule];
+  const savingsList=[];
+
+  for(const ev of sortedEvents) {
+    const lenBefore=schedule.length;
+    const row=schedule.find(r=>r.bln===ev.bulan);
+    if(row&&ev.amount>=row.sisa){
+      const warnEl=$(`pv-${ev.id}`),cardEl=$(`pc-${ev.id}`);
+      if(warnEl) warnEl.innerHTML=`<div class="pel-warn">⚠️ Jumlah pelunasan melebihi sisa pokok.</div>`;
+      if(cardEl) cardEl.classList.add('has-error');
+      cardEl?.scrollIntoView({behavior:'smooth',block:'center'}); return;
     }
-    const months = pelEvents.map(ev => ev.bulan);
-    const dupes  = months.filter((m, i) => months.indexOf(m) !== i);
-    if (dupes.length) { alert(`Dua pelunasan di bulan yang sama (${dupes[0]}). Gunakan bulan berbeda.`); return; }
-    const zeroAmt = pelEvents.filter(ev => ev.amount <= 0);
-    if (zeroAmt.length) {
-      validateAllPelunasan();
-      $(`pc-${zeroAmt[0].id}`)?.scrollIntoView({ behavior:'smooth', block:'center' });
-      return;
+    const res=applyOnePelunasan(schedule,ev);
+    if(!res.skipped) {
+      const pelIdx=savingsList.length;
+      schedule=res.schedule.map(r=>r.isPostPel&&r.pelEventIdx===undefined?{...r,pelEventIdx:pelIdx}:r);
+      const tenorHemat=lenBefore-schedule.length;
+      savingsList.push({label:`Pelunasan Bln ke-${ev.bulan}`,amount:ev.amount,penaltiAmt:res.penaltiAmt,bungaHemat:res.bungaHemat,tenorHemat,netHemat:res.bungaHemat-res.penaltiAmt,cicilanBaru:res.cicilanBaru,sisaAfter:res.sisaAfter,blnSetelah:ev.bulan+1,blnAkhir:res.blnAkhir});
     }
   }
 
-  const { schedule: baseSchedule, cicilanAwal, periodSummary } = buildBaseSchedule(pokok, totalBulan);
+  /* ── REFINANCING ── */
+  let refiResult = null;
+  if(refiOn) {
+    const refiBulan=parseInt($('refi-bulan')?.value)||36;
+    const refiTenorBaru=parseInt($('refi-tenor-baru')?.value)||17;
+    const refiBankNama=$('refi-bank-nama')?.value||'Bank Baru';
+    const refiTenorBulan=refiTenorBaru*12;
 
-  const sortedEvents = pelOn ? [...pelEvents].sort((a,b) => a.bulan - b.bulan) : [];
-  let schedule = [...baseSchedule];
-  const savingsList = [];
+    // Find sisa pokok at refinancing month
+    const refiRow=schedule.find(r=>r.bln===refiBulan);
+    if(!refiRow){showToast('⚠️ Bulan refinancing di luar jadwal');return;}
+    const sisaPokok=refiRow.sisa;
+    if(sisaPokok<=0){showToast('⚠️ Tidak ada sisa pokok saat refinancing');return;}
 
-  for (const ev of sortedEvents) {
-    const lenBefore = schedule.length;
-    const row = schedule.find(r => r.bln === ev.bulan);
-    if (row && ev.amount >= row.sisa) {
-      const warnEl = $(`pv-${ev.id}`), cardEl = $(`pc-${ev.id}`);
-      if (warnEl) warnEl.innerHTML = `<div class="pel-warn">⚠️ Jumlah pelunasan (${fmtS(ev.amount)}) melebihi atau sama dengan sisa pokok saat itu (${fmtS(row.sisa)}). Kurangi jumlah pelunasan.</div>`;
-      if (cardEl) cardEl.classList.add('has-error');
-      cardEl?.scrollIntoView({ behavior:'smooth', block:'center' }); return;
-    }
-    const res = applyOnePelunasan(schedule, ev);
-    if (!res.skipped) {
-      // Tag post-pel rows with which event produced them
-      const pelIdx = savingsList.length; // index of the event about to be pushed
-      schedule = res.schedule.map(r => r.isPostPel && r.pelEventIdx === undefined ? { ...r, pelEventIdx: pelIdx } : r);
-      const tenorHemat = lenBefore - schedule.length;
-      savingsList.push({
-        label: `Pelunasan Bln ke-${ev.bulan}`,
-        amount: ev.amount, penaltiAmt: res.penaltiAmt, bungaHemat: res.bungaHemat,
-        tenorHemat, netHemat: res.bungaHemat - res.penaltiAmt,
-        cicilanBaru: res.cicilanBaru, sisaAfter: res.sisaAfter,
-        blnSetelah: ev.bulan + 1, blnAkhir: res.blnAkhir,
-      });
-    }
+    // Hitung cicilan lama di bulan tersebut
+    const cicilanLama=refiRow.cicilan;
+
+    // Hitung semua biaya refinancing
+    const penaltiPct=(parseFloat($('biaya-penalti-pct')?.value)||0)/100;
+    const penaltiFlat=rawVal('biaya-penalti-flat');
+    const provisiPct=(parseFloat($('biaya-provisi')?.value)||0)/100;
+    const admin=rawVal('biaya-admin');
+    const appraisal=rawVal('biaya-appraisal');
+    const notaris=rawVal('biaya-notaris');
+    const asjiPct=(parseFloat($('biaya-asji')?.value)||0)/100;
+    const askeb=rawVal('biaya-askeb');
+    const lain=rawVal('biaya-lain');
+
+    const biayaPenalti=(sisaPokok*penaltiPct)+penaltiFlat;
+    const biayaProvisi=sisaPokok*provisiPct;
+    const biayaAdmin=admin;
+    const biayaAppraisal=appraisal;
+    const biayaNotaris=notaris;
+    const biayaAsji=sisaPokok*asjiPct;
+    const biayaAskeb=askeb;
+    const biayaLain=lain;
+    const totalBiayaRefi=biayaPenalti+biayaProvisi+biayaAdmin+biayaAppraisal+biayaNotaris+biayaAsji+biayaAskeb+biayaLain;
+
+    // Build jadwal lama setelah bulan refi (counterfactual)
+    const jadwalLamaSetelah=schedule.filter(r=>r.bln>refiBulan);
+    const bungaLamaSetelah=jadwalLamaSetelah.reduce((a,r)=>a+r.bunga,0);
+    const totalCicilanLamaSetelah=jadwalLamaSetelah.reduce((a,r)=>a+r.cicilan,0);
+
+    // Build jadwal baru di bank baru
+    const {schedule:jadwalBaru,cicilanAwal:cicilanBaru,periodSummary:refiPeriodSummary}=buildRefiSchedule(sisaPokok,refiTenorBulan);
+    const bungaBaruSetelah=jadwalBaru.reduce((a,r)=>a+r.bunga,0);
+    const totalCicilanBaruSetelah=jadwalBaru.reduce((a,r)=>a+r.cicilan,0);
+
+    const bungaHemat=bungaLamaSetelah-bungaBaruSetelah;
+    const selisihCicilan=cicilanLama-cicilanBaru;
+    const breakEvenBulan=selisihCicilan>0?Math.ceil(totalBiayaRefi/selisihCicilan):Infinity;
+    const netHemat=bungaHemat-totalBiayaRefi;
+    const worthIt=netHemat>0&&breakEvenBulan<refiTenorBulan;
+
+    refiResult={
+      refiBulan,refiTenorBaru,refiBankNama,sisaPokok,
+      cicilanLama,cicilanBaru,
+      bungaLamaSetelah,bungaBaruSetelah,bungaHemat,
+      totalCicilanLamaSetelah,totalCicilanBaruSetelah,
+      totalBiayaRefi,selisihCicilan,breakEvenBulan,netHemat,worthIt,
+      jadwalBaru,refiPeriodSummary,
+      biaya:{biayaPenalti,biayaProvisi,biayaAdmin,biayaAppraisal,biayaNotaris,biayaAsji,biayaAskeb,biayaLain}
+    };
+
+    // Ganti bagian jadwal setelah refi bulan dengan jadwal baru
+    const preRefi=schedule.filter(r=>r.bln<=refiBulan).map((r,i,arr)=>i===arr.length-1?{...r,isRefiRow:true}:r);
+    const postRefi=jadwalBaru.map(r=>({...r,bln:r.bln+refiBulan,isPostRefi:true,stepRate:r.stepRate}));
+    schedule=[...preRefi,...postRefi];
   }
 
   // Store for CSV export
-  _lastSchedule = schedule;
+  _lastSchedule=schedule;
 
-  const totalCicilan = schedule.reduce((a,r) => a + r.cicilan, 0);
-  const totalBunga   = schedule.reduce((a,r) => a + r.bunga, 0);
-  const lastBln      = schedule.length > 0 ? schedule[schedule.length-1].bln : 0;
+  const totalCicilan=schedule.reduce((a,r)=>a+r.cicilan,0);
+  const totalBunga=schedule.reduce((a,r)=>a+r.bunga,0);
+  const lastBln=schedule.length>0?schedule[schedule.length-1].bln:0;
 
-  $('res-total').textContent    = fmt(totalCicilan);
-  $('res-sub').textContent      = `dalam ${lastBln} bulan (${(lastBln/12).toFixed(1)} tahun)`;
-  $('res-pokok').textContent    = fmtS(pokok);
-  $('res-bunga').textContent    = fmtS(totalBunga);
-  $('res-cicilan').textContent  = fmtS(cicilanAwal) + '/bln';
-  $('res-tenor').textContent    = `${lastBln} bln`;
+  $('res-total').textContent   = fmt(totalCicilan);
+  $('res-sub').textContent     = `dalam ${lastBln} bulan (${(lastBln/12).toFixed(1)} tahun)`;
+  $('res-pokok').textContent   = fmtS(pokok);
+  $('res-bunga').textContent   = fmtS(totalBunga);
+  $('res-cicilan').textContent = fmtS(cicilanAwal)+'/bln';
+  $('res-tenor').textContent   = `${lastBln} bln`;
 
-  // Chart
   renderChart(schedule);
 
-  // Period summary
-  const psb = $('period-summary-box');
-  psb.innerHTML = '<div class="psb-header">📶 Cicilan Per Periode</div>';
-  periodSummary.forEach(p => {
-    const row = document.createElement('div');
-    row.className = 'period-row';
-    row.innerHTML = `
-      <div class="period-left">
-        <div class="period-badge ${p.isFloat?'float':''}">${p.isFloat?'FLOAT':'FIX'}</div>
-        <div>
-          <div class="period-name">${p.label} · ${p.rate}%/thn</div>
-          <div class="period-meta">Bln ${p.blnStart}–${p.blnEnd} · Pokok awal: ${fmtS(p.sisaAwal)}</div>
-        </div>
-      </div>
-      <div class="period-cicilan">${fmt(p.cicilan)}<span>/bln</span></div>`;
+  // Period summary (bank lama)
+  const psb=$('period-summary-box');
+  psb.innerHTML='<div class="psb-header">📶 Cicilan Per Periode (Bank Lama)</div>';
+  periodSummary.forEach(p=>{
+    const row=document.createElement('div'); row.className='period-row';
+    row.innerHTML=`<div class="period-left"><div class="period-badge ${p.isFloat?'float':''}">${p.isFloat?'FLOAT':'FIX'}</div><div><div class="period-name">${p.label} · ${p.rate}%/thn</div><div class="period-meta">Bln ${p.blnStart}–${p.blnEnd} · Pokok awal: ${fmtS(p.sisaAwal)}</div></div></div><div class="period-cicilan">${fmt(p.cicilan)}<span>/bln</span></div>`;
     psb.appendChild(row);
   });
-  psb.style.display = 'block';
+  psb.style.display='block';
 
   // After-pelunasan summary
-  const apb = $('after-pel-box');
-  if (pelOn && savingsList.length > 0) {
-    apb.innerHTML = '<div class="psb-header">💰 Cicilan Per Periode Setelah Pelunasan</div>';
-
-    const addRow = (badge, badgeClass, label, meta, cicilan, highlight) => {
-      const row = document.createElement('div');
-      row.className = 'period-row' + (highlight ? ' pel-after-highlight' : '');
-      row.innerHTML = `
-        <div class="period-left">
-          <div class="period-badge ${badgeClass}">${badge}</div>
-          <div><div class="period-name">${label}</div><div class="period-meta">${meta}</div></div>
-        </div>
-        <div class="period-cicilan">${fmt(cicilan)}<span>/bln</span></div>`;
+  const apb=$('after-pel-box');
+  if(pelOn&&savingsList.length>0) {
+    apb.innerHTML='<div class="psb-header">💰 Cicilan Per Periode Setelah Pelunasan</div>';
+    const addRow=(badge,badgeClass,label,meta,cicilan,highlight)=>{
+      const row=document.createElement('div'); row.className='period-row'+(highlight?' pel-after-highlight':'');
+      row.innerHTML=`<div class="period-left"><div class="period-badge ${badgeClass}">${badge}</div><div><div class="period-name">${label}</div><div class="period-meta">${meta}</div></div></div><div class="period-cicilan">${fmt(cicilan)}<span>/bln</span></div>`;
       apb.appendChild(row);
     };
-
-    // Row 0: before any pelunasan
-    const firstPelBln = savingsList[0].blnSetelah - 1;
-    addRow('AWAL', '', 'Sebelum Pelunasan', `Bln 1–${firstPelBln} · cicilan bertingkat per periode`, cicilanAwal, false);
-
-    // For each pelunasan event, find all distinct cicilan segments in post-pel rows
-    savingsList.forEach((s, i) => {
-      // Gather post-pel rows belonging to this event
-      const postRows = schedule.filter(r => r.isPostPel && r.pelEventIdx === i);
-      if (!postRows.length) return;
-
-      // Group into segments where cicilan changes (rate boundary or cicilan recalc)
-      const segments = [];
-      let segStart = postRows[0];
-      let segCicilan = postRows[0].cicilan;
-      postRows.forEach((r, ri) => {
-        if (ri === 0) return;
-        if (Math.abs(r.cicilan - segCicilan) > 1) {
-          segments.push({ blnStart: segStart.bln, blnEnd: postRows[ri-1].bln, cicilan: segCicilan });
-          segStart = r;
-          segCicilan = r.cicilan;
-        }
+    const firstPelBln=savingsList[0].blnSetelah-1;
+    addRow('AWAL','',`Sebelum Pelunasan`,`Bln 1–${firstPelBln} · cicilan bertingkat per periode`,cicilanAwal,false);
+    savingsList.forEach((s,i)=>{
+      const postRows=schedule.filter(r=>r.isPostPel&&r.pelEventIdx===i);
+      if(!postRows.length) return;
+      const segments=[]; let segStart=postRows[0], segCicilan=postRows[0].cicilan;
+      postRows.forEach((r,ri)=>{
+        if(ri===0) return;
+        if(Math.abs(r.cicilan-segCicilan)>1){segments.push({blnStart:segStart.bln,blnEnd:postRows[ri-1].bln,cicilan:segCicilan});segStart=r;segCicilan=r.cicilan;}
       });
-      segments.push({ blnStart: segStart.bln, blnEnd: postRows[postRows.length-1].bln, cicilan: segCicilan });
-
-      segments.forEach((seg, si) => {
-        const isFirst = si === 0;
-        const badge = isFirst ? `#${i+1}` : `↳`;
-        const label = isFirst
-          ? `Setelah Pelunasan ke-${i+1} · Pokok berkurang ${fmtS(s.amount)}`
-          : `Ganti bunga (rate berubah)`;
-        const meta = `Bln ${seg.blnStart}–${seg.blnEnd}`;
-        addRow(badge, 'float', label, meta, seg.cicilan, true);
+      segments.push({blnStart:segStart.bln,blnEnd:postRows[postRows.length-1].bln,cicilan:segCicilan});
+      segments.forEach((seg,si)=>{
+        const isFirst=si===0;
+        addRow(isFirst?`#${i+1}`:'↳','float',isFirst?`Setelah Pelunasan ke-${i+1} · Pokok berkurang ${fmtS(s.amount)}`:'Ganti bunga (rate berubah)',`Bln ${seg.blnStart}–${seg.blnEnd}`,seg.cicilan,true);
       });
     });
+    apb.style.display='block';
+  } else { apb.style.display='none'; }
 
-    apb.style.display = 'block';
-  } else {
-    apb.style.display = 'none';
-  }
-
-  // Savings banners
-  const sc = $('savings-container'); sc.innerHTML = '';
-  savingsList.forEach(s => {
-    const d = document.createElement('div');
-    d.className = 'savings-banner';
-    d.innerHTML = `
-      <div class="savings-banner-title">💰 ${s.label} — ${fmtS(s.amount)}</div>
+  // Savings banners (pelunasan)
+  const sc=$('savings-container'); sc.innerHTML='';
+  savingsList.forEach(s=>{
+    const d=document.createElement('div'); d.className='savings-banner';
+    d.innerHTML=`<div class="savings-banner-title">💰 ${s.label} — ${fmtS(s.amount)}</div>
       <div class="savings-row"><span class="lbl">Penalti dibayar</span><span class="val neg">${fmt(s.penaltiAmt)}</span></div>
       <div class="savings-row"><span class="lbl">Bunga dihemat</span><span class="val pos">${fmt(Math.max(s.bungaHemat,0))}</span></div>
       <div class="savings-row"><span class="lbl">Cicilan baru</span><span class="val pos">${fmt(s.cicilanBaru)}/bln</span></div>
-      <div class="savings-row savings-divider">
-        <span class="lbl" style="font-weight:700;color:var(--ink)">Net Penghematan</span>
-        <span class="val pos" style="font-size:15px">${fmt(Math.max(s.netHemat,0))}</span>
-      </div>`;
+      <div class="savings-row savings-divider"><span class="lbl" style="font-weight:700;color:var(--ink)">Net Penghematan</span><span class="val pos" style="font-size:15px">${fmt(Math.max(s.netHemat,0))}</span></div>`;
     sc.appendChild(d);
   });
-  if (savingsList.length > 1) {
-    const totPenalti = savingsList.reduce((a,s)=>a+s.penaltiAmt,0);
-    const totBunga   = savingsList.reduce((a,s)=>a+s.bungaHemat,0);
-    const totNet     = savingsList.reduce((a,s)=>a+s.netHemat,0);
-    const d = document.createElement('div');
-    d.className = 'savings-banner';
-    d.style.cssText = 'border-color:var(--green-light);background:var(--green-pale)';
-    d.innerHTML = `
-      <div class="savings-banner-title" style="color:var(--green-deep)">🎉 Total ${savingsList.length} Event Pelunasan</div>
-      <div class="savings-row"><span class="lbl">Total penalti</span><span class="val neg">${fmt(totPenalti)}</span></div>
-      <div class="savings-row"><span class="lbl">Total bunga dihemat</span><span class="val pos">${fmt(Math.max(totBunga,0))}</span></div>
-      <div class="savings-row savings-divider">
-        <span class="lbl" style="font-weight:800;color:var(--ink)">Net Hemat Keseluruhan</span>
-        <span class="val pos" style="font-size:16px">${fmt(Math.max(totNet,0))}</span>
-      </div>`;
+  if(savingsList.length>1) {
+    const totP=savingsList.reduce((a,s)=>a+s.penaltiAmt,0), totB=savingsList.reduce((a,s)=>a+s.bungaHemat,0), totN=savingsList.reduce((a,s)=>a+s.netHemat,0);
+    const d=document.createElement('div'); d.className='savings-banner'; d.style.cssText='border-color:var(--green-light);background:var(--green-pale)';
+    d.innerHTML=`<div class="savings-banner-title" style="color:var(--green-deep)">🎉 Total ${savingsList.length} Event Pelunasan</div>
+      <div class="savings-row"><span class="lbl">Total penalti</span><span class="val neg">${fmt(totP)}</span></div>
+      <div class="savings-row"><span class="lbl">Total bunga dihemat</span><span class="val pos">${fmt(Math.max(totB,0))}</span></div>
+      <div class="savings-row savings-divider"><span class="lbl" style="font-weight:800;color:var(--ink)">Net Hemat Keseluruhan</span><span class="val pos" style="font-size:16px">${fmt(Math.max(totN,0))}</span></div>`;
     sc.appendChild(d);
   }
 
+  /* ── REFI RESULT RENDER ── */
+  const rrc=$('refi-result-container'); rrc.innerHTML='';
+  if(refiResult) {
+    const r=refiResult;
+    const beText=r.breakEvenBulan===Infinity?'Tidak balik modal'
+      :r.breakEvenBulan<=0?'Langsung balik modal'
+      :`${r.breakEvenBulan} bulan setelah refi`;
+
+    // Hero banner
+    const heroBanner=document.createElement('div'); heroBanner.className='refi-banner';
+    heroBanner.innerHTML=`
+      <div class="refi-banner-title">🔄 HASIL SIMULASI REFINANCING — ${r.refiBankNama.toUpperCase()}</div>
+      <div class="refi-compare">
+        <div class="refi-compare-col">
+          <div class="refi-compare-label">Cicilan Lama/bln</div>
+          <div class="refi-compare-val">${fmtS(r.cicilanLama)}</div>
+        </div>
+        <div class="refi-compare-arrow">→</div>
+        <div class="refi-compare-col right">
+          <div class="refi-compare-label">Cicilan Baru/bln</div>
+          <div class="refi-compare-val" style="color:#7FFFD4">${fmtS(r.cicilanBaru)}</div>
+        </div>
+      </div>
+      <div class="refi-stats">
+        <div class="refi-stat">
+          <div class="refi-stat-lbl">Hemat/bulan</div>
+          <div class="refi-stat-val ${r.selisihCicilan>0?'pos':'neg'}">${r.selisihCicilan>0?'+':''}${fmtS(Math.abs(r.selisihCicilan))}</div>
+        </div>
+        <div class="refi-stat">
+          <div class="refi-stat-lbl">Bunga Dihemat</div>
+          <div class="refi-stat-val ${r.bungaHemat>0?'pos':'neg'}">${fmtS(Math.max(r.bungaHemat,0))}</div>
+        </div>
+        <div class="refi-stat">
+          <div class="refi-stat-lbl">Total Biaya Refi</div>
+          <div class="refi-stat-val neg">−${fmtS(r.totalBiayaRefi)}</div>
+        </div>
+        <div class="refi-stat">
+          <div class="refi-stat-lbl">Net Penghematan</div>
+          <div class="refi-stat-val ${r.netHemat>0?'pos':'neg'}">${r.netHemat>0?'+':''}${fmtS(r.netHemat)}</div>
+        </div>
+      </div>
+      <div class="refi-breakeven">
+        <div class="refi-breakeven-lbl">⏱ Break-even Point</div>
+        <div class="refi-breakeven-val">${beText}</div>
+      </div>`;
+    rrc.appendChild(heroBanner);
+
+    // Biaya breakdown
+    const biayaCard=document.createElement('div'); biayaCard.className='refi-breakdown-card';
+    const b=r.biaya;
+    const rows=[
+      {lbl:'🏦 Penalti pelunasan bank lama',val:b.biayaPenalti,neg:true},
+      {lbl:'📋 Biaya provisi bank baru',val:b.biayaProvisi,neg:true},
+      {lbl:'🗂 Biaya administrasi',val:b.biayaAdmin,neg:true},
+      {lbl:'🏠 Appraisal / KJPP',val:b.biayaAppraisal,neg:true},
+      {lbl:'📜 Biaya notaris / PPAT',val:b.biayaNotaris,neg:true},
+      {lbl:'🛡 Asuransi jiwa',val:b.biayaAsji,neg:true},
+      {lbl:'🔥 Asuransi kebakaran',val:b.biayaAskeb,neg:true},
+      {lbl:'📦 Biaya lain-lain',val:b.biayaLain,neg:true},
+    ].filter(row=>row.val>0);
+
+    biayaCard.innerHTML=`<div class="refi-breakdown-header">💸 Rincian Biaya Refinancing di Bulan ke-${r.refiBulan}</div>`;
+    const body=document.createElement('div'); body.className='refi-breakdown-body';
+    rows.forEach(row=>{
+      const div=document.createElement('div'); div.className='refi-breakdown-row';
+      div.innerHTML=`<div class="refi-breakdown-lbl">${row.lbl}</div><div class="refi-breakdown-val neg">${fmt(row.val)}</div>`;
+      body.appendChild(div);
+    });
+    biayaCard.appendChild(body);
+    const totDiv=document.createElement('div'); totDiv.className='refi-breakdown-total';
+    totDiv.innerHTML=`<div class="lbl">Total Biaya Refinancing</div><div class="val">${fmt(r.totalBiayaRefi)}</div>`;
+    biayaCard.appendChild(totDiv);
+    rrc.appendChild(biayaCard);
+
+    // Refi period summary
+    const rpBox=document.createElement('div');
+    rpBox.style.cssText='background:var(--white);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);margin-bottom:16px;';
+    rpBox.innerHTML=`<div style="background:var(--blue-mid);color:var(--white);padding:12px 16px;font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">📶 Cicilan Per Periode — ${r.refiBankNama}</div>`;
+    r.refiPeriodSummary.forEach(p=>{
+      const row=document.createElement('div'); row.className='period-row';
+      row.innerHTML=`<div class="period-left"><div class="period-badge ${p.isFloat?'float':''}" style="${p.isFloat?'':'background:var(--refi-pale);color:var(--blue-mid)'}">${p.isFloat?'FLOAT':'FIX'}</div><div><div class="period-name">${p.label} · ${p.rate}%/thn</div><div class="period-meta">Bln ${p.blnStart}–${p.blnEnd} · Pokok: ${fmtS(p.sisaAwal)}</div></div></div><div class="period-cicilan" style="color:var(--blue-mid)">${fmt(p.cicilan)}<span>/bln</span></div>`;
+      rpBox.appendChild(row);
+    });
+    rrc.appendChild(rpBox);
+  }
+
   // Schedule table
-  const tbody = $('schedule-body'); tbody.innerHTML = '';
-  $('sch-count').textContent = `${lastBln} bulan`;
-  let lastStepIdx = -1;
-  let lastCicilan = -1;
-  let lastPelEventIdx = -1;
+  const tbody=$('schedule-body'); tbody.innerHTML='';
+  $('sch-count').textContent=`${lastBln} bulan`;
+  let lastStepIdx=-1, lastCicilan=-1, lastPelEventIdx=-1;
+  let refiStarted=false;
 
-  schedule.forEach((r, i) => {
-    const isPostPel = !!r.isPostPel;
-    const pelEvIdx  = r.pelEventIdx ?? -1;
+  schedule.forEach((r,i)=>{
+    const isPostPel=!!r.isPostPel, pelEvIdx=r.pelEventIdx??-1;
 
-    // Period-sep: new rate step (before any pelunasan)
-    if (!isPostPel && r.stepIdx !== undefined && r.stepIdx !== lastStepIdx) {
-      lastStepIdx = r.stepIdx;
-      const ps = periodSummary[r.stepIdx];
-      if (ps) {
-        const sep = document.createElement('tr');
-        sep.className = 'period-sep';
-        sep.innerHTML = `<td colspan="6">📶 ${ps.label} — ${ps.rate}%/thn — ${fmt(ps.cicilan)}/bln</td>`;
+    if(!isPostPel&&!r.isPostRefi&&r.stepIdx!==undefined&&r.stepIdx!==lastStepIdx) {
+      lastStepIdx=r.stepIdx;
+      const ps=periodSummary[r.stepIdx];
+      if(ps){const sep=document.createElement('tr');sep.className='period-sep';sep.innerHTML=`<td colspan="6">📶 ${ps.label} — ${ps.rate}%/thn — ${fmt(ps.cicilan)}/bln</td>`;tbody.appendChild(sep);}
+    }
+
+    if(isPostPel){
+      const cicilanJumped=Math.abs(r.cicilan-lastCicilan)>1, newEvent=pelEvIdx!==lastPelEventIdx;
+      if(newEvent||cicilanJumped){
+        lastPelEventIdx=pelEvIdx; lastCicilan=r.cicilan;
+        const sep=document.createElement('tr'); sep.className='pel-segment-sep';
+        sep.innerHTML=`<td colspan="6">${newEvent?`💰 Setelah Pelunasan ke-${pelEvIdx+1} — cicilan baru: ${fmt(r.cicilan)}/bln`:`↳ Ganti bunga — cicilan baru: ${fmt(r.cicilan)}/bln`}</td>`;
         tbody.appendChild(sep);
       }
     }
 
-    // Cicilan-change separator for post-pel rows
-    if (isPostPel) {
-      const cicilanJumped = Math.abs(r.cicilan - lastCicilan) > 1;
-      const newEvent      = pelEvIdx !== lastPelEventIdx;
-
-      if (newEvent || cicilanJumped) {
-        lastPelEventIdx = pelEvIdx;
-        lastCicilan     = r.cicilan;
-        const sep = document.createElement('tr');
-        sep.className = 'pel-segment-sep';
-        const evLabel = newEvent
-          ? `💰 Setelah Pelunasan ke-${pelEvIdx + 1} — cicilan baru: ${fmt(r.cicilan)}/bln`
-          : `↳ Ganti bunga — cicilan baru: ${fmt(r.cicilan)}/bln`;
-        sep.innerHTML = `<td colspan="6">${evLabel}</td>`;
-        tbody.appendChild(sep);
-      }
+    if(r.isRefiRow&&!refiStarted) {
+      refiStarted=true;
+    }
+    if(r.isPostRefi&&!refiStarted) {
+      refiStarted=true;
+      const sep=document.createElement('tr'); sep.className='refi-sep';
+      const bn=refiResult?.refiBankNama||'Bank Baru';
+      sep.innerHTML=`<td colspan="6">🔄 Mulai Refinancing Bln ${refiResult?.refiBulan} — ${bn} — Cicilan: ${fmt(refiResult?.cicilanBaru)}/bln</td>`;
+      tbody.appendChild(sep);
     }
 
-    const tr = document.createElement('tr');
-    if (r.isPelRow)  tr.classList.add('pel-row');
-    if (isPostPel)   tr.classList.add('pel-body-row');
-    if (i === schedule.length - 1) tr.classList.add('last-row');
-    tr.innerHTML = `
-      <td>${r.bln}${r.isPelRow?' 💰':''}</td>
+    const tr=document.createElement('tr');
+    if(r.isPelRow)  tr.classList.add('pel-row');
+    if(r.isRefiRow) tr.classList.add('refi-row');
+    if(r.isPostRefi)tr.classList.add('refi-body-row');
+    if(isPostPel)   tr.classList.add('pel-body-row');
+    if(i===schedule.length-1) tr.classList.add('last-row');
+    tr.innerHTML=`
+      <td>${r.bln}${r.isPelRow?' 💰':''}${r.isRefiRow?' 🔄':''}</td>
       <td style="color:var(--ink-60);font-size:11px">${r.stepRate!==undefined?(r.stepRate*12*100).toFixed(2)+'%':'—'}</td>
       <td>${fmtS(r.cicilan)}</td>
       <td class="col-pkok">${fmtS(r.pkok)}</td>
       <td class="col-bunga">${fmtS(r.bunga)}</td>
       <td>${fmtS(r.sisa)}</td>`;
     tbody.appendChild(tr);
-
-    if (!isPostPel) lastCicilan = r.cicilan;
+    if(!isPostPel&&!r.isPostRefi) lastCicilan=r.cicilan;
   });
 
   $('results-section').classList.add('show');
-  setTimeout(() => $('results-section').scrollIntoView({ behavior:'smooth', block:'start' }), 100);
+  setTimeout(()=>$('results-section').scrollIntoView({behavior:'smooth',block:'start'}),100);
 }
 
 /* ── INIT ── */
-window.addEventListener('DOMContentLoaded', () => {
-  setCur('s-harga', 1000000000);
-  setCur('s-dp', 200000000);
+window.addEventListener('DOMContentLoaded', ()=>{
+  setCur('s-harga',1000000000);
+  setCur('s-dp',200000000);
+  setCur('biaya-admin',500000);
+  setCur('biaya-appraisal',1500000);
+  setCur('biaya-notaris',5000000);
+  setCur('biaya-askeb',500000);
   renderSteps();
   renderPresets();
   loadFromHash();
 });
 
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
 </html>
